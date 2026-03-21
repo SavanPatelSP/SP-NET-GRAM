@@ -32,3 +32,7 @@ This repo is a scaffold. Mobile and web runtime dependencies are not installed h
 - Node.js (for web)
 
 Once those are installed, we can wire build scripts and run the apps.
+
+## Deployment (suggested)
+- Backend: Render (see `render.yaml`)
+- Web: Vercel (set env vars from `apps/web/.env.example`)

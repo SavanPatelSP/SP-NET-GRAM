@@ -37,8 +37,13 @@ const seedGemsTx = [
   { title: "Store Bundle", amount: "-120", date: "3 days ago" },
 ];
 
+const envBackendUrl =
+  typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_BACKEND_URL
+    ? import.meta.env.VITE_BACKEND_URL
+    : "";
+
 const state = {
-  backendUrl: localStorage.getItem("spg_backend_url") || "http://localhost:8790",
+  backendUrl: localStorage.getItem("spg_backend_url") || envBackendUrl || "http://localhost:8790",
   token: localStorage.getItem("spg_token"),
   profile: null,
   premiumStatus: null,

@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "spnet_gram.db")
+DB_PATH = os.getenv("SPNET_DB_PATH", os.path.join(BASE_DIR, "spnet_gram.db"))
 
 DEFAULT_SP_COIN = 2000
 DEFAULT_GEMS = 50

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: spnet-gram-backend
+    env: python
+    rootDir: services/spnet-gram-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: SPNET_DB_PATH
+        value: /var/data/spnet_gram.db
+    disk:
+      name: spnet-gram-data
+      mountPath: /var/data
+      sizeGB: 1

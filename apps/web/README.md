@@ -12,6 +12,7 @@ Set environment variables in `.env`:
 ```
 VITE_TG_API_ID=123456
 VITE_TG_API_HASH=your_api_hash
+VITE_BACKEND_URL=https://your-backend.onrender.com
 ```
 
 MTProto client wrapper lives at `telegram/mtproto_client.js`.
