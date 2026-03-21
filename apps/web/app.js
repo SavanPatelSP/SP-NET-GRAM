@@ -1,3 +1,5 @@
+import { MtprotoClient } from "./telegram/mtproto_client.js";
+
 const sampleChats = [
   { id: 1, name: "Nova Squad", preview: "We ship the beta tonight." },
   { id: 2, name: "SP NET Ops", preview: "Airdrop schedule updated." },
@@ -50,6 +52,11 @@ const state = {
   premiumPlans: [],
   wallet: null,
   assistantThread: [...seedAssistantThread],
+  tgClient: null,
+  tgChats: [],
+  tgMessages: new Map(),
+  tgPhoneCodeHash: null,
+  activeChatId: null,
 };
 
 const navItems = document.querySelectorAll(".nav-item");
@@ -58,6 +65,7 @@ const views = document.querySelectorAll(".view");
 const elements = {
   chatList: document.getElementById("chatList"),
   chatMessages: document.getElementById("chatMessages"),
+  threadName: document.getElementById("threadName"),
   assistantThread: document.getElementById("assistantThread"),
   assistantInput: document.getElementById("assistantInput"),
   assistantSend: document.getElementById("assistantSend"),
@@ -89,6 +97,11 @@ const elements = {
   logoutBtn: document.getElementById("logoutBtn"),
   backendUrl: document.getElementById("backendUrl"),
   saveBackendBtn: document.getElementById("saveBackendBtn"),
+  tgStatus: document.getElementById("tgStatus"),
+  tgPhone: document.getElementById("tgPhone"),
+  tgSendCodeBtn: document.getElementById("tgSendCodeBtn"),
+  tgCode: document.getElementById("tgCode"),
+  tgSignInBtn: document.getElementById("tgSignInBtn"),
 };
 
 navItems.forEach((item) => {
@@ -116,23 +129,29 @@ function setAuthStatus(text, ok = false) {
 
 function renderChats() {
   elements.chatList.innerHTML = "";
-  sampleChats.forEach((chat, index) => {
+  const chats = state.tgChats.length ? state.tgChats : sampleChats;
+  chats.forEach((chat, index) => {
     const card = document.createElement("div");
-    card.className = `chat-item ${index === 0 ? "active" : ""}`;
+    const isActive = state.activeChatId ? chat.id === state.activeChatId : index === 0;
+    card.className = `chat-item ${isActive ? "active" : ""}`;
     card.innerHTML = `
-      <div class="title">${chat.name}</div>
-      <div class="preview">${chat.preview}</div>
+      <div class="title">${chat.title || chat.name}</div>
+      <div class="preview">${chat.lastMessage || chat.preview || ""}</div>
     `;
+    card.addEventListener("click", () => selectChat(chat.id, chat.title || chat.name));
     elements.chatList.appendChild(card);
   });
 }
 
 function renderMessages() {
   elements.chatMessages.innerHTML = "";
-  sampleMessages.forEach((msg) => {
+  const messages = state.activeChatId && state.tgMessages.has(state.activeChatId)
+    ? state.tgMessages.get(state.activeChatId)
+    : sampleMessages;
+  messages.forEach((msg) => {
     const bubble = document.createElement("div");
     bubble.className = `message ${msg.from === "you" ? "you" : ""}`;
-    bubble.textContent = msg.text;
+    bubble.textContent = msg.text || msg.message || "";
     elements.chatMessages.appendChild(bubble);
   });
 }
@@ -213,6 +232,103 @@ function setBackendUrl(value) {
   if (elements.backendUrl) {
     elements.backendUrl.value = value;
   }
+}
+
+function setTelegramStatus(text, ok = false) {
+  if (elements.tgStatus) {
+    elements.tgStatus.textContent = text;
+    elements.tgStatus.style.color = ok ? "var(--accent)" : "var(--muted)";
+  }
+}
+
+async function initTelegram() {
+  const apiId = Number(import.meta.env.VITE_TG_API_ID || 0);
+  const apiHash = import.meta.env.VITE_TG_API_HASH || "";
+  if (!apiId || !apiHash) {
+    setTelegramStatus("Missing API ID/Hash", false);
+    return;
+  }
+  state.tgClient = new MtprotoClient({ apiId, apiHash });
+}
+
+async function sendTelegramCode() {
+  if (!state.tgClient) await initTelegram();
+  if (!state.tgClient) return;
+  const phone = elements.tgPhone.value.trim();
+  if (!phone) {
+    setTelegramStatus("Enter phone number", false);
+    return;
+  }
+  try {
+    const { phoneCodeHash } = await state.tgClient.sendCode(phone);
+    state.tgPhoneCodeHash = phoneCodeHash;
+    setTelegramStatus("Code sent", true);
+  } catch (error) {
+    setTelegramStatus(error.message || "Telegram error", false);
+  }
+}
+
+async function signInTelegram() {
+  if (!state.tgClient) await initTelegram();
+  if (!state.tgClient) return;
+  const phone = elements.tgPhone.value.trim();
+  const code = elements.tgCode.value.trim();
+  if (!phone || !code || !state.tgPhoneCodeHash) {
+    setTelegramStatus("Enter phone and code", false);
+    return;
+  }
+  try {
+    await state.tgClient.signIn({ phone, code, phoneCodeHash: state.tgPhoneCodeHash });
+    setTelegramStatus("Telegram connected", true);
+    await loadTelegramChats();
+  } catch (error) {
+    setTelegramStatus(error.message || "Telegram sign-in failed", false);
+  }
+}
+
+async function loadTelegramChats() {
+  if (!state.tgClient) return;
+  try {
+    const chats = await state.tgClient.getChats();
+    state.tgChats = chats;
+    if (chats.length) {
+      state.activeChatId = chats[0].id;
+      if (elements.threadName) {
+        elements.threadName.textContent = chats[0].title;
+      }
+      await loadTelegramMessages(chats[0].id);
+    }
+    renderChats();
+    renderMessages();
+  } catch (error) {
+    setTelegramStatus(error.message || "Failed to load chats", false);
+  }
+}
+
+async function loadTelegramMessages(chatId) {
+  if (!state.tgClient) return;
+  try {
+    const messages = await state.tgClient.getMessages(chatId);
+    const normalized = messages.map((msg) => ({
+      from: "them",
+      text: msg.text,
+    }));
+    state.tgMessages.set(chatId, normalized);
+  } catch (error) {
+    setTelegramStatus(error.message || "Failed to load messages", false);
+  }
+}
+
+async function selectChat(chatId, title) {
+  state.activeChatId = chatId;
+  if (elements.threadName) {
+    elements.threadName.textContent = title || "Chat";
+  }
+  if (state.tgClient && state.tgChats.length) {
+    await loadTelegramMessages(chatId);
+  }
+  renderChats();
+  renderMessages();
 }
 
 async function apiFetch(path, options = {}) {
@@ -474,6 +590,13 @@ function bindEvents() {
     }
   });
 
+  if (elements.tgSendCodeBtn) {
+    elements.tgSendCodeBtn.addEventListener("click", sendTelegramCode);
+  }
+  if (elements.tgSignInBtn) {
+    elements.tgSignInBtn.addEventListener("click", signInTelegram);
+  }
+
   document.querySelectorAll(".tool").forEach((tool) => {
     tool.addEventListener("click", () => {
       const intent = tool.dataset.intent || "general";
@@ -493,6 +616,11 @@ function init() {
     elements.backendUrl.value = state.backendUrl;
   }
   bindEvents();
+  initTelegram().then(() => {
+    if (state.tgClient) {
+      setTelegramStatus("Ready to connect", false);
+    }
+  });
   if (state.token) {
     refreshProfile().then(() => {
       refreshWallet();

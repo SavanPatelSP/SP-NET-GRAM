@@ -19,6 +19,12 @@ build/
 android/.gradle/
 android/local.properties
 android/app/debug.keystore
+android/key.properties
+apps/mobile/android/key.properties
+
+# Keystore
+keystore/
+apps/mobile/keystore/
 
 # iOS
 ios/Pods/

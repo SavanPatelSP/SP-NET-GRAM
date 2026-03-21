@@ -12,6 +12,7 @@
     "telegram": "^2.26.4"
   },
   "devDependencies": {
-    "vite": "^5.4.3"
+    "vite": "^5.4.3",
+    "vite-plugin-node-polyfills": "^0.22.0"
   }
 }
