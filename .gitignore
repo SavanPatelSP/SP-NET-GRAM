@@ -1,0 +1,31 @@
+.DS_Store
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Flutter / Dart
+.dart_tool/
+.build/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/debug.keystore
+
+# iOS
+ios/Pods/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+
+# VS Code
+.vscode/

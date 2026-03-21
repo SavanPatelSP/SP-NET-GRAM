@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SP NET GRAM — Web Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SP</div>
+          <div>
+            <div class="brand-name">SP NET GRAM</div>
+            <div class="brand-sub">Telegram-style client</div>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item active" data-view="chats">Chats</button>
+          <button class="nav-item" data-view="assistant">Assistant</button>
+          <button class="nav-item" data-view="spg">SPG ID</button>
+          <button class="nav-item" data-view="premium">Premium</button>
+          <button class="nav-item" data-view="spcoin">SP Coin</button>
+          <button class="nav-item" data-view="gems">Gems</button>
+          <button class="nav-item" data-view="settings">Settings</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="pill" id="authStatus">Disconnected</div>
+          <div class="pill accent">Airdrop Live</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="view" data-view="chats">
+          <div class="panel-header">
+            <h1>Chats</h1>
+            <div class="panel-actions">
+              <button class="ghost">New Chat</button>
+              <button class="primary">Invite</button>
+            </div>
+          </div>
+
+          <div class="chat-layout">
+            <div class="chat-list" id="chatList"></div>
+            <div class="chat-thread">
+              <div class="chat-thread-header">
+                <div>
+                  <div class="thread-name" id="threadName">Nova Squad</div>
+                  <div class="thread-meta">8 members · 2 online</div>
+                </div>
+                <div class="thread-actions">
+                  <button class="ghost">Search</button>
+                  <button class="ghost">Mute</button>
+                </div>
+              </div>
+              <div class="chat-messages" id="chatMessages"></div>
+              <div class="composer">
+                <input type="text" placeholder="Message" />
+                <button class="primary">Send</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view="assistant">
+          <div class="panel-header">
+            <h1>Assistant</h1>
+            <div class="panel-actions">
+              <button class="ghost">New Prompt</button>
+              <button class="primary">Summarize Chat</button>
+            </div>
+          </div>
+          <div class="assistant-grid">
+            <div class="assistant-card">
+              <h3>Quick Tools</h3>
+              <div class="tool-grid">
+                <button class="tool" data-intent="summarize">Summarize</button>
+                <button class="tool" data-intent="translate">Translate</button>
+                <button class="tool" data-intent="rewrite">Rewrite</button>
+                <button class="tool" data-intent="smart_reply">Smart Replies</button>
+                <button class="tool" data-intent="action_items">Action Items</button>
+                <button class="tool" data-intent="tone">Tone Adjust</button>
+              </div>
+            </div>
+            <div class="assistant-card">
+              <h3>Chat with SP Assistant</h3>
+              <div class="assistant-thread" id="assistantThread"></div>
+              <div class="composer">
+                <input id="assistantInput" type="text" placeholder="Ask the assistant..." />
+                <button id="assistantSend" class="primary">Ask</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view="spg">
+          <div class="panel-header">
+            <h1>SP NET GRAM ID</h1>
+            <div class="panel-actions">
+              <button class="primary" id="mintSpgBtn">Mint SPG ID</button>
+            </div>
+          </div>
+          <div class="spg-card">
+            <div class="spg-badge" id="spgBadge">SPG-4F9A-88X2</div>
+            <p>Your SP NET GRAM ID is your portable identity across chats, premium perks, and wallet history.</p>
+            <div class="spg-meta">
+              <div>
+                <div class="label">Handle</div>
+                <div id="spgHandle">@spnetgram</div>
+              </div>
+              <div>
+                <div class="label">Rank</div>
+                <div id="spgRank">Founder</div>
+              </div>
+              <div>
+                <div class="label">Badges</div>
+                <div id="spgBadges">Alpha · Builder</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view="premium">
+          <div class="panel-header">
+            <h1>Premium Plans</h1>
+            <div class="panel-actions">
+              <div class="pill" id="premiumStatus">Plan: Free</div>
+              <button class="ghost" id="refreshPremiumBtn">Refresh</button>
+            </div>
+          </div>
+          <div class="card-grid" id="premiumPlans"></div>
+        </section>
+
+        <section class="view hidden" data-view="spcoin">
+          <div class="panel-header">
+            <h1>SP Coin</h1>
+            <div class="panel-actions">
+              <button class="ghost">History</button>
+              <button class="primary">Claim Airdrop</button>
+            </div>
+          </div>
+          <div class="wallet-card">
+            <div>
+              <div class="label">Balance</div>
+              <div class="wallet-balance" id="spCoinBalance">12,480 SP</div>
+            </div>
+            <div class="wallet-cta">
+              <button class="primary">Send</button>
+              <button class="ghost">Receive</button>
+            </div>
+          </div>
+          <div class="airdrop-card">
+            <div>
+              <div class="label">Next Airdrop</div>
+              <div class="airdrop-timer" id="airdropTimer">in 04:12:33</div>
+            </div>
+            <button class="primary" id="airdropClaimBtn">Claim Now</button>
+          </div>
+          <div class="tx-list" id="spcoinTx"></div>
+        </section>
+
+        <section class="view hidden" data-view="gems">
+          <div class="panel-header">
+            <h1>Gems</h1>
+            <div class="panel-actions">
+              <button class="ghost">Redeem</button>
+              <button class="primary">Buy Gems</button>
+            </div>
+          </div>
+          <div class="wallet-card">
+            <div>
+              <div class="label">Balance</div>
+              <div class="wallet-balance" id="gemsBalance">580 Gems</div>
+            </div>
+            <div class="wallet-cta">
+              <button class="primary">Boost</button>
+              <button class="ghost">Gift</button>
+            </div>
+          </div>
+          <div class="airdrop-card">
+            <div>
+              <div class="label">Daily Gem Boost</div>
+              <div class="airdrop-timer">+12 Gems in 3h</div>
+            </div>
+            <button class="ghost">View Tasks</button>
+          </div>
+          <div class="tx-list" id="gemsTx"></div>
+        </section>
+
+        <section class="view hidden" data-view="settings">
+          <div class="panel-header">
+            <h1>Settings</h1>
+          </div>
+          <div class="settings-grid">
+            <div class="setting-card account-card">
+              <h3>Account</h3>
+              <div class="account-status" id="accountStatus">Not connected</div>
+              <div class="account-grid">
+                <div class="account-form">
+                  <h4>Login</h4>
+                  <input id="loginEmail" type="email" placeholder="Email" />
+                  <input id="loginPassword" type="password" placeholder="Password" />
+                  <button class="primary" id="loginBtn">Login</button>
+                </div>
+                <div class="account-form">
+                  <h4>Register</h4>
+                  <input id="registerName" type="text" placeholder="Display name" />
+                  <input id="registerEmail" type="email" placeholder="Email" />
+                  <input id="registerPassword" type="password" placeholder="Password" />
+                  <button class="ghost" id="registerBtn">Register</button>
+                </div>
+              </div>
+              <div class="profile-summary">
+                <div class="label">Current User</div>
+                <div id="profileName">—</div>
+                <div id="profileEmail">—</div>
+                <button class="ghost" id="logoutBtn">Logout</button>
+              </div>
+              <div class="backend-row">
+                <div>
+                  <div class="label">Backend URL</div>
+                  <input id="backendUrl" type="text" value="http://localhost:8790" />
+                </div>
+                <button class="ghost" id="saveBackendBtn">Save</button>
+              </div>
+            </div>
+            <div class="setting-card">
+              <h3>Notifications</h3>
+              <p>Sound, vibration, quiet hours.</p>
+            </div>
+            <div class="setting-card">
+              <h3>Appearance</h3>
+              <p>Theme, chat bubbles, and compact mode.</p>
+            </div>
+            <div class="setting-card">
+              <h3>About</h3>
+              <p>Version info, release notes, legal.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
