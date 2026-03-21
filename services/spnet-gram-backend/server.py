@@ -450,6 +450,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     init_db()
-    server = ThreadingHTTPServer(("0.0.0.0", 8790), Handler)
-    print("SP NET GRAM backend running on http://localhost:8790")
+    port = int(os.getenv("PORT", "8790"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print(f"SP NET GRAM backend running on http://localhost:{port}")
     server.serve_forever()
