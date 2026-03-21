@@ -102,6 +102,7 @@ export class MtprotoClient {
       sender: message.senderId?.toString() || "Unknown",
       text: message.message || "",
       timestamp: this._toDate(message.date),
+      isOutgoing: Boolean(message.out),
     }));
   }
 
