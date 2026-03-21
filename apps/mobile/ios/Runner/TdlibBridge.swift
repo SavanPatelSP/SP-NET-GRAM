@@ -23,9 +23,12 @@ class TdlibBridge: NSObject {
     private var receiving = false
     private var pendingChats: Set<Int64> = []
     private var chatCache: [Int64: [String: Any]] = [:]
+    private let databasePath: String
 
     init(controller: FlutterViewController) {
         self.channel = FlutterMethodChannel(name: "spnetgram/tdlib", binaryMessenger: controller.binaryMessenger)
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        self.databasePath = documents?.appendingPathComponent("tdlib").path ?? "tdlib"
         super.init()
         self.channel.setMethodCallHandler(handle)
     }
@@ -55,6 +58,13 @@ class TdlibBridge: NSObject {
             if let args = call.arguments as? [String: Any] {
                 let password = args["password"] as? String ?? ""
                 send(["@type": "checkAuthenticationPassword", "password": password])
+            }
+            result(true)
+        case "registerUser":
+            if let args = call.arguments as? [String: Any] {
+                let firstName = args["firstName"] as? String ?? ""
+                let lastName = args["lastName"] as? String ?? ""
+                send(["@type": "registerUser", "first_name": firstName, "last_name": lastName])
             }
             result(true)
         case "fetchChats":
@@ -141,8 +151,9 @@ class TdlibBridge: NSObject {
                         "@type": "setTdlibParameters",
                         "parameters": [
                             "@type": "tdlibParameters",
-                            "database_directory": "tdlib",
+                            "database_directory": databasePath,
                             "use_message_database": true,
+                            "use_file_database": true,
                             "use_secret_chats": false,
                             "api_id": apiId,
                             "api_hash": apiHash,
@@ -159,6 +170,13 @@ class TdlibBridge: NSObject {
                     emit("onAuthState", ["status": "WAIT_CODE"])
                 } else if stateType == "authorizationStateWaitPassword" {
                     emit("onAuthState", ["status": "WAIT_PASSWORD"])
+                } else if stateType == "authorizationStateWaitEncryptionKey" {
+                    send(["@type": "checkDatabaseEncryptionKey", "encryption_key": ""])
+                } else if stateType == "authorizationStateWaitOtherDeviceConfirmation" {
+                    let link = state["link"] as? String ?? ""
+                    emit("onAuthState", ["status": "WAIT_DEVICE_CONFIRMATION", "message": link])
+                } else if stateType == "authorizationStateWaitRegistration" {
+                    emit("onAuthState", ["status": "WAIT_REGISTRATION"])
                 } else if stateType == "authorizationStateReady" {
                     emit("onAuthState", ["status": "READY"])
                     send(["@type": "getChats", "chat_list": ["@type": "chatListMain"], "limit": 50])

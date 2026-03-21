@@ -41,6 +41,10 @@ class TelegramController extends ChangeNotifier {
     await _bridge.sendPassword(password);
   }
 
+  Future<void> registerUser(String firstName, String lastName) async {
+    await _bridge.registerUser(firstName, lastName);
+  }
+
   Future<void> fetchChats() async {
     await _bridge.fetchChats();
   }

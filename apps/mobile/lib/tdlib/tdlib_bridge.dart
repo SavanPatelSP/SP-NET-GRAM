@@ -33,6 +33,10 @@ class TdlibBridge {
     await _channel.invokeMethod('sendPassword', {'password': password});
   }
 
+  Future<void> registerUser(String firstName, String lastName) async {
+    await _channel.invokeMethod('registerUser', {'firstName': firstName, 'lastName': lastName});
+  }
+
   Future<void> sendMessage(int chatId, String text) async {
     await _channel.invokeMethod('sendMessage', {'chatId': chatId, 'text': text});
   }

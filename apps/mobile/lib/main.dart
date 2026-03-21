@@ -160,6 +160,8 @@ class _ChatsPageState extends State<ChatsPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
 
   @override
@@ -174,6 +176,8 @@ class _ChatsPageState extends State<ChatsPage> {
     _phoneController.dispose();
     _codeController.dispose();
     _passwordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _messageController.dispose();
     super.dispose();
   }
@@ -271,6 +275,46 @@ class _ChatsPageState extends State<ChatsPage> {
                 ElevatedButton(
                   onPressed: () => widget.controller.sendPassword(_passwordController.text.trim()),
                   child: const Text('Submit'),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (status == 'WAIT_DEVICE_CONFIRMATION') ...[
+          _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Confirm on another device', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text(auth.message ?? 'Open Telegram and confirm this login.'),
+              ],
+            ),
+          ),
+        ],
+        if (status == 'WAIT_REGISTRATION') ...[
+          _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Create Telegram account', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(labelText: 'First name'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _lastNameController,
+                  decoration: const InputDecoration(labelText: 'Last name'),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () => widget.controller.registerUser(
+                    _firstNameController.text.trim(),
+                    _lastNameController.text.trim(),
+                  ),
+                  child: const Text('Register'),
                 ),
               ],
             ),

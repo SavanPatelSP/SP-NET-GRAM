@@ -45,6 +45,12 @@ class TdlibBridge(private val engine: FlutterEngine) : MethodChannel.MethodCallH
                 send(TdApi.CheckAuthenticationPassword(password))
                 result.success(true)
             }
+            "registerUser" -> {
+                val firstName = call.argument<String>("firstName") ?: ""
+                val lastName = call.argument<String>("lastName") ?: ""
+                send(TdApi.RegisterUser(firstName, lastName))
+                result.success(true)
+            }
             "fetchChats" -> {
                 fetchChats()
                 result.success(true)
@@ -98,7 +104,9 @@ class TdlibBridge(private val engine: FlutterEngine) : MethodChannel.MethodCallH
             is TdApi.AuthorizationStateWaitTdlibParameters -> {
                 val params = TdApi.TdlibParameters().apply {
                     databaseDirectory = engine.context.filesDir.absolutePath + "/tdlib"
+                    filesDirectory = engine.context.filesDir.absolutePath + "/tdlib_files"
                     useMessageDatabase = true
+                    useFileDatabase = true
                     useSecretChats = false
                     apiId = this@TdlibBridge.apiId
                     apiHash = this@TdlibBridge.apiHash
@@ -110,9 +118,17 @@ class TdlibBridge(private val engine: FlutterEngine) : MethodChannel.MethodCallH
                 }
                 send(TdApi.SetTdlibParameters(params))
             }
+            is TdApi.AuthorizationStateWaitEncryptionKey -> {
+                send(TdApi.CheckDatabaseEncryptionKey(ByteArray(0)))
+            }
             is TdApi.AuthorizationStateWaitPhoneNumber -> emitAuth("WAIT_PHONE")
             is TdApi.AuthorizationStateWaitCode -> emitAuth("WAIT_CODE")
             is TdApi.AuthorizationStateWaitPassword -> emitAuth("WAIT_PASSWORD")
+            is TdApi.AuthorizationStateWaitOtherDeviceConfirmation -> emitAuth(
+                "WAIT_DEVICE_CONFIRMATION",
+                state.link
+            )
+            is TdApi.AuthorizationStateWaitRegistration -> emitAuth("WAIT_REGISTRATION")
             is TdApi.AuthorizationStateReady -> {
                 emitAuth("READY")
                 fetchChats()
