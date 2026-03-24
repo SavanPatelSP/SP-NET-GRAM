@@ -25,6 +25,7 @@ apps/mobile/android/key.properties
 # Keystore
 keystore/
 apps/mobile/keystore/
+apps/telegram-android/TMessagesProj/config/release.keystore
 
 # iOS
 ios/Pods/

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <defs>
+    <linearGradient id="spgGradient" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="80" fill="url(#spgGradient)" />
+  <text x="80" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700" fill="#FFFFFF">SP</text>
+</svg>
