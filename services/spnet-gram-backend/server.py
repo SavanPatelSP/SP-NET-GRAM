@@ -4,8 +4,9 @@ import sqlite3
 import secrets
 import hashlib
 import datetime
+import mimetypes
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DB_PATH = os.getenv("SPNET_DB_PATH", os.path.join(BASE_DIR, "spnet_gram.db"))
@@ -39,6 +40,11 @@ DEFAULT_GEMS = 50
 AIRDROP_BONUS = 500
 AIRDROP_COOLDOWN_HOURS = 24
 IAP_VERIFY = os.getenv("IAP_VERIFY", "0") == "1"
+REQUIRE_LICENSE = os.getenv("REQUIRE_LICENSE", "1") == "1"
+LICENSE_KEY_PREFIX = os.getenv("LICENSE_KEY_PREFIX", "SPG")
+MAX_LICENSE_BATCH = 500
+
+ROLE_ORDER = ["user", "manager", "admin"]
 
 PREMIUM_PLANS = [
     {
@@ -90,7 +96,52 @@ def init_db():
     schema_path = os.path.join(BASE_DIR, "schema.sql")
     with db_connect() as conn, open(schema_path, "r", encoding="utf-8") as f:
         conn.executescript(f.read())
+        ensure_schema(conn)
         conn.commit()
+
+
+def ensure_column(conn, table_name, column_name, definition):
+    cols = [row["name"] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()]
+    if column_name in cols:
+        return
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
+
+
+def ensure_schema(conn):
+    ensure_column(conn, "users", "role", "TEXT NOT NULL DEFAULT 'user'")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS license_keys (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          license_key TEXT UNIQUE NOT NULL,
+          plan_id TEXT NOT NULL,
+          status TEXT NOT NULL,
+          max_uses INTEGER NOT NULL DEFAULT 1,
+          uses INTEGER NOT NULL DEFAULT 0,
+          duration_days INTEGER,
+          expires_at TEXT,
+          notes TEXT,
+          created_by INTEGER,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY(created_by) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS license_redemptions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          license_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          redeemed_at TEXT NOT NULL,
+          FOREIGN KEY(license_id) REFERENCES license_keys(id),
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_license_keys_key ON license_keys(license_key)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_license_redemptions_user ON license_redemptions(user_id)")
 
 
 def hash_password(password: str, salt: str) -> str:
@@ -128,6 +179,28 @@ def json_response(handler, status, payload):
     handler.wfile.write(body)
 
 
+def serve_static(handler, rel_path):
+    static_dir = os.path.join(BASE_DIR, "static")
+    full_path = os.path.realpath(os.path.join(static_dir, rel_path))
+    if not full_path.startswith(os.path.realpath(static_dir)):
+        handler.send_response(403)
+        handler.end_headers()
+        return
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        handler.send_response(404)
+        handler.end_headers()
+        return
+    content_type, _ = mimetypes.guess_type(full_path)
+    content_type = content_type or "application/octet-stream"
+    with open(full_path, "rb") as f:
+        data = f.read()
+    handler.send_response(200)
+    handler.send_header("Content-Type", content_type)
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
 def get_token(handler):
     auth = handler.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
@@ -147,6 +220,32 @@ def get_user_by_token(token):
             conn.execute("UPDATE sessions SET last_seen = ? WHERE token = ?", (now_iso(), token))
             conn.commit()
         return row
+
+
+def require_role(user, allowed_roles):
+    if user is None:
+        return False
+    try:
+        role = user["role"]
+    except Exception:
+        role = getattr(user, "role", None)
+    return role in allowed_roles
+
+
+def maybe_bootstrap_admin(conn, user_id):
+    row = conn.execute("SELECT COUNT(*) AS cnt FROM users WHERE role = 'admin'").fetchone()
+    if row and row["cnt"] == 0:
+        conn.execute("UPDATE users SET role = 'admin' WHERE id = ?", (user_id,))
+
+
+def generate_license_key(conn):
+    for _ in range(50):
+        raw = secrets.token_hex(8).upper()
+        key = f"{LICENSE_KEY_PREFIX}-{raw[0:4]}-{raw[4:8]}-{raw[8:12]}-{raw[12:16]}"
+        exists = conn.execute("SELECT 1 FROM license_keys WHERE license_key = ?", (key,)).fetchone()
+        if not exists:
+            return key
+    raise RuntimeError("license_key_generation_failed")
 
 
 def mint_spg_id():
@@ -189,6 +288,41 @@ def get_premium_status(conn, user_id):
     }
 
 
+def is_premium_active(status):
+    if not status:
+        return False
+    if status["planId"] == "free":
+        return False
+    if status["status"] != "active":
+        return False
+    if status["expiresAt"]:
+        exp = parse_iso(status["expiresAt"])
+        if exp and exp < datetime.datetime.utcnow():
+            return False
+    return True
+
+
+def get_access_state(conn, user_id):
+    premium = get_premium_status(conn, user_id)
+    can_use = is_premium_active(premium) if REQUIRE_LICENSE else True
+    return {
+        "canUse": can_use,
+        "reason": None if can_use else "license_required",
+        "premium": premium,
+        "requireLicense": REQUIRE_LICENSE,
+    }
+
+
+def enforce_access(handler, conn, user):
+    if not REQUIRE_LICENSE:
+        return True
+    access = get_access_state(conn, user["id"])
+    if access["canUse"]:
+        return True
+    json_response(handler, 403, {"error": "license_required", "access": access})
+    return False
+
+
 def get_airdrop_status(conn, user_id):
     row = conn.execute(
         "SELECT last_claim_at FROM airdrop_status WHERE user_id = ?",
@@ -223,6 +357,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path in ("/", "/admin"):
+            return serve_static(self, "admin.html")
+        if parsed.path.startswith("/static/"):
+            return serve_static(self, parsed.path[len("/static/"):])
         if parsed.path == "/api/health":
             return json_response(self, 200, {"ok": True})
 
@@ -230,6 +368,29 @@ class Handler(BaseHTTPRequestHandler):
             user = get_user_by_token(get_token(self))
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                access = get_access_state(conn, user["id"])
+            role = None
+            try:
+                role = user["role"]
+            except Exception:
+                role = "user"
+            return json_response(self, 200, {
+                "id": user["id"],
+                "email": user["email"],
+                "displayName": user["display_name"],
+                "spgId": user["spg_id"],
+                "role": role or "user",
+                "access": access,
+            })
+
+        if parsed.path == "/api/profile":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
             return json_response(self, 200, {
                 "id": user["id"],
                 "email": user["email"],
@@ -237,15 +398,27 @@ class Handler(BaseHTTPRequestHandler):
                 "spgId": user["spg_id"],
             })
 
-        if parsed.path == "/api/profile":
+        if parsed.path == "/api/access/status":
             user = get_user_by_token(get_token(self))
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                access = get_access_state(conn, user["id"])
+            return json_response(self, 200, access)
+
+        if parsed.path == "/api/license/status":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                access = get_access_state(conn, user["id"])
+                redemptions = conn.execute(
+                    "SELECT lk.license_key, lk.plan_id, lk.expires_at, lr.redeemed_at FROM license_redemptions lr JOIN license_keys lk ON lk.id = lr.license_id WHERE lr.user_id = ? ORDER BY lr.id DESC LIMIT 5",
+                    (user["id"],),
+                ).fetchall()
             return json_response(self, 200, {
-                "id": user["id"],
-                "email": user["email"],
-                "displayName": user["display_name"],
-                "spgId": user["spg_id"],
+                "access": access,
+                "recentRedemptions": [dict(row) for row in redemptions],
             })
 
         if parsed.path == "/api/wallet":
@@ -253,6 +426,8 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
             with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
                 wallet = conn.execute(
                     "SELECT sp_coin, gems FROM wallet WHERE user_id = ?",
                     (user["id"],),
@@ -274,6 +449,8 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
             with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
                 status = get_airdrop_status(conn, user["id"])
             return json_response(self, 200, status)
 
@@ -286,7 +463,44 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 401, {"error": "Unauthorized"})
             with db_connect() as conn:
                 status = get_premium_status(conn, user["id"])
-            return json_response(self, 200, status)
+                access = get_access_state(conn, user["id"])
+            return json_response(self, 200, {"premium": status, "access": access})
+
+        if parsed.path == "/api/admin/licenses":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            params = parse_qs(parsed.query or "")
+            status = params.get("status", [None])[0]
+            limit = params.get("limit", ["200"])[0]
+            try:
+                limit = max(1, min(int(limit), 500))
+            except ValueError:
+                limit = 200
+            with db_connect() as conn:
+                if status:
+                    rows = conn.execute(
+                        "SELECT * FROM license_keys WHERE status = ? ORDER BY id DESC LIMIT ?",
+                        (status, limit),
+                    ).fetchall()
+                else:
+                    rows = conn.execute(
+                        "SELECT * FROM license_keys ORDER BY id DESC LIMIT ?",
+                        (limit,),
+                    ).fetchall()
+            return json_response(self, 200, {"licenses": [dict(row) for row in rows]})
+
+        if parsed.path == "/api/admin/users":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            with db_connect() as conn:
+                rows = conn.execute("SELECT id, email, display_name, role, created_at FROM users ORDER BY id DESC LIMIT 200").fetchall()
+            return json_response(self, 200, {"users": [dict(row) for row in rows]})
 
         return json_response(self, 404, {"error": "Not found"})
 
@@ -306,6 +520,7 @@ class Handler(BaseHTTPRequestHandler):
                         (email, encode_password(password), display_name, now_iso()),
                     )
                     user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"]
+                    maybe_bootstrap_admin(conn, user_id)
                     conn.execute(
                         "INSERT INTO wallet (user_id, sp_coin, gems, updated_at) VALUES (?, ?, ?, ?)",
                         (user_id, DEFAULT_SP_COIN, DEFAULT_GEMS, now_iso()),
@@ -345,8 +560,9 @@ class Handler(BaseHTTPRequestHandler):
                     "INSERT INTO sessions (token, user_id, created_at, last_seen) VALUES (?, ?, ?, ?)",
                     (token, user["id"], now_iso(), now_iso()),
                 )
+                access = get_access_state(conn, user["id"])
                 conn.commit()
-            return json_response(self, 200, {"token": token})
+            return json_response(self, 200, {"token": token, "role": user["role"], "access": access})
 
         if parsed.path == "/api/profile/spg-id/mint":
             user = get_user_by_token(get_token(self))
@@ -356,6 +572,8 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 200, {"spgId": user["spg_id"], "status": "existing"})
             spg_id = mint_spg_id()
             with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
                 conn.execute("UPDATE users SET spg_id = ? WHERE id = ?", (spg_id, user["id"]))
                 conn.commit()
             return json_response(self, 200, {"spgId": spg_id, "status": "minted"})
@@ -365,6 +583,8 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
             with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
                 status = get_airdrop_status(conn, user["id"])
                 if not status["canClaim"]:
                     return json_response(self, 400, {"error": "Airdrop cooldown", "nextClaimAt": status["nextClaimAt"]})
@@ -423,11 +643,210 @@ class Handler(BaseHTTPRequestHandler):
                 "receiptStored": bool(receipt),
             })
 
+        if parsed.path == "/api/license/redeem":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            payload = read_json(self)
+            key = (payload.get("licenseKey") or payload.get("key") or "").strip()
+            if not key:
+                return json_response(self, 400, {"error": "Missing license key"})
+            with db_connect() as conn:
+                license_row = conn.execute(
+                    "SELECT * FROM license_keys WHERE license_key = ?",
+                    (key,),
+                ).fetchone()
+                if not license_row:
+                    return json_response(self, 404, {"error": "License not found"})
+                if license_row["status"] != "active":
+                    return json_response(self, 400, {"error": "License not active", "status": license_row["status"]})
+                if license_row["expires_at"]:
+                    exp = parse_iso(license_row["expires_at"])
+                    if exp and exp < datetime.datetime.utcnow():
+                        return json_response(self, 400, {"error": "License expired"})
+                if license_row["uses"] >= license_row["max_uses"]:
+                    return json_response(self, 400, {"error": "License exhausted"})
+                existing = conn.execute(
+                    "SELECT 1 FROM license_redemptions WHERE license_id = ? AND user_id = ?",
+                    (license_row["id"], user["id"]),
+                ).fetchone()
+                if existing:
+                    return json_response(self, 400, {"error": "License already redeemed"})
+                now = datetime.datetime.utcnow().replace(microsecond=0)
+                duration_days = license_row["duration_days"]
+                if duration_days:
+                    expires_at = (now + datetime.timedelta(days=duration_days)).isoformat() + "Z"
+                else:
+                    expires_at = None
+                conn.execute(
+                    "INSERT INTO license_redemptions (license_id, user_id, redeemed_at) VALUES (?, ?, ?)",
+                    (license_row["id"], user["id"], now_iso()),
+                )
+                new_uses = license_row["uses"] + 1
+                new_status = "exhausted" if new_uses >= license_row["max_uses"] else license_row["status"]
+                conn.execute(
+                    "UPDATE license_keys SET uses = ?, status = ?, updated_at = ? WHERE id = ?",
+                    (new_uses, new_status, now_iso(), license_row["id"]),
+                )
+                conn.execute(
+                    "INSERT OR REPLACE INTO premium (user_id, plan_id, status, platform, receipt, expires_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (user["id"], license_row["plan_id"], "active", "license", key, expires_at, now_iso()),
+                )
+                conn.commit()
+                access = get_access_state(conn, user["id"])
+            return json_response(self, 200, {
+                "ok": True,
+                "planId": license_row["plan_id"],
+                "expiresAt": expires_at,
+                "access": access,
+            })
+
+        if parsed.path == "/api/admin/licenses/create":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            plan_id = payload.get("planId")
+            count = payload.get("count", 1)
+            max_uses = payload.get("maxUses", 1)
+            duration_days = payload.get("durationDays")
+            expires_at = payload.get("expiresAt")
+            notes = payload.get("notes")
+            if plan_id not in [p["id"] for p in PREMIUM_PLANS if p["id"] != "free"]:
+                return json_response(self, 400, {"error": "Invalid planId"})
+            try:
+                count = max(1, min(int(count), MAX_LICENSE_BATCH))
+                max_uses = max(1, int(max_uses))
+                if duration_days is not None:
+                    duration_days = int(duration_days)
+                    if duration_days <= 0:
+                        return json_response(self, 400, {"error": "durationDays must be > 0"})
+            except ValueError:
+                return json_response(self, 400, {"error": "Invalid numeric values"})
+            now = now_iso()
+            with db_connect() as conn:
+                created = []
+                for _ in range(count):
+                    key = generate_license_key(conn)
+                    conn.execute(
+                        "INSERT INTO license_keys (license_key, plan_id, status, max_uses, uses, duration_days, expires_at, notes, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            key,
+                            plan_id,
+                            "active",
+                            max_uses,
+                            0,
+                            duration_days,
+                            expires_at,
+                            notes,
+                            user["id"],
+                            now,
+                            now,
+                        ),
+                    )
+                    created.append({
+                        "licenseKey": key,
+                        "planId": plan_id,
+                        "status": "active",
+                        "maxUses": max_uses,
+                        "uses": 0,
+                        "durationDays": duration_days,
+                        "expiresAt": expires_at,
+                        "notes": notes,
+                        "createdAt": now,
+                    })
+                conn.commit()
+            return json_response(self, 200, {"created": created})
+
+        if parsed.path == "/api/admin/licenses/revoke":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            key = payload.get("licenseKey") or payload.get("key")
+            if not key:
+                return json_response(self, 400, {"error": "Missing licenseKey"})
+            with db_connect() as conn:
+                row = conn.execute("SELECT id FROM license_keys WHERE license_key = ?", (key,)).fetchone()
+                if not row:
+                    return json_response(self, 404, {"error": "License not found"})
+                conn.execute(
+                    "UPDATE license_keys SET status = ?, updated_at = ? WHERE license_key = ?",
+                    ("revoked", now_iso(), key),
+                )
+                conn.commit()
+            return json_response(self, 200, {"ok": True})
+
+        if parsed.path == "/api/admin/licenses/update":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            key = payload.get("licenseKey") or payload.get("key")
+            if not key:
+                return json_response(self, 400, {"error": "Missing licenseKey"})
+            fields = []
+            values = []
+            for field in ("status", "maxUses", "expiresAt", "notes"):
+                if field in payload:
+                    if field == "maxUses":
+                        try:
+                            payload[field] = int(payload[field])
+                        except ValueError:
+                            return json_response(self, 400, {"error": "Invalid maxUses"})
+                        fields.append("max_uses = ?")
+                        values.append(payload[field])
+                    elif field == "expiresAt":
+                        fields.append("expires_at = ?")
+                        values.append(payload[field])
+                    else:
+                        fields.append(f"{field} = ?")
+                        values.append(payload[field])
+            if not fields:
+                return json_response(self, 400, {"error": "No fields to update"})
+            values.append(now_iso())
+            values.append(key)
+            with db_connect() as conn:
+                conn.execute(
+                    f"UPDATE license_keys SET {', '.join(fields)}, updated_at = ? WHERE license_key = ?",
+                    tuple(values),
+                )
+                conn.commit()
+            return json_response(self, 200, {"ok": True})
+
+        if parsed.path == "/api/admin/users/role":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            target_id = payload.get("userId")
+            role = payload.get("role")
+            if not target_id or role not in ROLE_ORDER:
+                return json_response(self, 400, {"error": "Invalid userId or role"})
+            with db_connect() as conn:
+                conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, target_id))
+                conn.commit()
+            return json_response(self, 200, {"ok": True})
+
         if parsed.path == "/api/assistant/chat":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
             payload = read_json(self)
             messages = payload.get("messages", [])
             intent = payload.get("intent", "general")
             last_user = next((m.get("content") for m in reversed(messages) if m.get("role") == "user"), "")
+            with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
             if intent == "summarize":
                 reply = "(stub) Summary: key goals, decisions, and next steps captured."
                 suggestions = ["Action items", "Smart replies", "Translate"]

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SP NET GRAM License Manager</title>
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SP NET GRAM License Manager</h1>
+      <p class="muted">Managers and admins can create, revoke, and audit premium license keys.</p>
+    </header>
+
+    <section class="card" id="login-card">
+      <h2>Login</h2>
+      <div class="grid">
+        <label>Email
+          <input id="email" type="email" placeholder="manager@spnet.in" />
+        </label>
+        <label>Password
+          <input id="password" type="password" placeholder="••••••••" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="login-btn">Sign in</button>
+        <button id="logout-btn" class="ghost" disabled>Sign out</button>
+      </div>
+      <div id="login-status" class="status muted"></div>
+    </section>
+
+    <section class="card" id="create-card">
+      <h2>Create License Keys</h2>
+      <div class="grid">
+        <label>Plan
+          <select id="planId">
+            <option value="plus">Plus</option>
+            <option value="pro">Pro</option>
+          </select>
+        </label>
+        <label>Count
+          <input id="count" type="number" min="1" max="500" value="1" />
+        </label>
+        <label>Max Uses
+          <input id="maxUses" type="number" min="1" value="1" />
+        </label>
+        <label>Duration (days)
+          <input id="durationDays" type="number" min="1" placeholder="Leave blank for lifetime" />
+        </label>
+        <label>Redeem By (ISO date)
+          <input id="expiresAt" type="text" placeholder="2026-12-31T23:59:59Z" />
+        </label>
+        <label>Notes
+          <input id="notes" type="text" placeholder="Internal note" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="create-btn">Generate Keys</button>
+        <button id="refresh-btn" class="ghost">Refresh List</button>
+      </div>
+      <div id="create-status" class="status muted"></div>
+      <div id="created-keys" class="keys"></div>
+    </section>
+
+    <section class="card">
+      <h2>Recent Licenses</h2>
+      <div id="licenses-status" class="status muted"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Uses</th>
+              <th>Expires</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="licenses-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

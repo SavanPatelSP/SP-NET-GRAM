@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   spg_id TEXT,
+  role TEXT NOT NULL DEFAULT 'user',
   created_at TEXT NOT NULL
 );
 
@@ -50,3 +51,31 @@ CREATE TABLE IF NOT EXISTS airdrop_status (
   updated_at TEXT NOT NULL,
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS license_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  license_key TEXT UNIQUE NOT NULL,
+  plan_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  max_uses INTEGER NOT NULL DEFAULT 1,
+  uses INTEGER NOT NULL DEFAULT 0,
+  duration_days INTEGER,
+  expires_at TEXT,
+  notes TEXT,
+  created_by INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(created_by) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS license_redemptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  license_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  redeemed_at TEXT NOT NULL,
+  FOREIGN KEY(license_id) REFERENCES license_keys(id),
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_license_keys_key ON license_keys(license_key);
+CREATE INDEX IF NOT EXISTS idx_license_redemptions_user ON license_redemptions(user_id);
