@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -224,6 +225,15 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         statusView.setTextColor(color);
     }
 
+    private String getErrorMessage(JSONObject json) {
+        if (json == null) return null;
+        String error = json.optString("error");
+        if (TextUtils.isEmpty(error)) {
+            error = json.optString("message");
+        }
+        return TextUtils.isEmpty(error) ? null : error;
+    }
+
     private void signIn() {
         signIn(0);
     }
@@ -241,7 +251,12 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 retryLater(() -> signIn(attempt + 1), attempt);
                 return;
             }
+            String error = getErrorMessage(json);
             String token = json.optString("token");
+            if (!TextUtils.isEmpty(error) && TextUtils.isEmpty(token)) {
+                updateStatus(error, true);
+                return;
+            }
             if (!TextUtils.isEmpty(token)) {
                 SpNetGramConfig.setBackendToken(token);
                 SpNetGramConfig.setBackendEmail(email);
@@ -267,7 +282,16 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         }
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCreating), false);
         SpNetGramApi.register(email, password, displayName, json -> {
-            if (json == null || !json.optBoolean("ok", false)) {
+            if (json == null) {
+                retryLater(() -> register(attempt + 1), attempt);
+                return;
+            }
+            String error = getErrorMessage(json);
+            if (!json.optBoolean("ok", false)) {
+                if (!TextUtils.isEmpty(error)) {
+                    updateStatus(error, true);
+                    return;
+                }
                 retryLater(() -> register(attempt + 1), attempt);
                 return;
             }
@@ -276,7 +300,12 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                     retryLater(() -> register(attempt + 1), attempt);
                     return;
                 }
+                String loginError = getErrorMessage(loginJson);
                 String token = loginJson.optString("token");
+                if (!TextUtils.isEmpty(loginError) && TextUtils.isEmpty(token)) {
+                    updateStatus(loginError, true);
+                    return;
+                }
                 if (!TextUtils.isEmpty(token)) {
                     SpNetGramConfig.setBackendToken(token);
                     SpNetGramConfig.setBackendEmail(email);
@@ -302,8 +331,17 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         }
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseRedeeming), false);
         SpNetGramApi.redeemLicense(token, licenseKey, json -> {
-            if (json == null || !json.optBoolean("ok", false)) {
+            if (json == null) {
                 updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            String error = getErrorMessage(json);
+            if (!json.optBoolean("ok", false)) {
+                if (!TextUtils.isEmpty(error)) {
+                    updateStatus(error, true);
+                } else {
+                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                }
                 return;
             }
             licenseInput.setText("");
@@ -326,6 +364,11 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         SpNetGramApi.accessStatus(token, json -> {
             if (json == null) {
                 retryLater(() -> refreshAccess(attempt + 1), attempt);
+                return;
+            }
+            String error = getErrorMessage(json);
+            if (!TextUtils.isEmpty(error)) {
+                updateStatus(error, true);
                 return;
             }
             boolean canUse = json.optBoolean("canUse", false);

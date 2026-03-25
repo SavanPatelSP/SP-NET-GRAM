@@ -10,10 +10,20 @@ public class SpNetGramApi {
         if (response == null) {
             return null;
         }
-        try {
-            return new JSONObject(response);
-        } catch (Exception e) {
+        String trimmed = response.trim();
+        if (trimmed.isEmpty()) {
             return null;
+        }
+        try {
+            return new JSONObject(trimmed);
+        } catch (Exception e) {
+            try {
+                JSONObject fallback = new JSONObject();
+                fallback.put("error", trimmed);
+                return fallback;
+            } catch (Exception ignore) {
+                return null;
+            }
         }
     }
 
