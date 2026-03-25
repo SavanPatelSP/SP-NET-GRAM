@@ -610,16 +610,28 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/auth/login":
             payload = read_json(self)
-            email = (payload.get("email") or "").strip().lower()
-            password = (payload.get("password") or "").strip()
-            if not email or not password:
+            email_raw = payload.get("email") or ""
+            password_raw = payload.get("password") or ""
+            email = email_raw.strip().lower()
+            password_trim = password_raw.strip()
+            if not email or not password_raw:
                 return json_response(self, 400, {"error": "Missing fields"})
             with db_connect() as conn:
                 user = conn.execute(
                     "SELECT * FROM users WHERE email = ? COLLATE NOCASE",
                     (email,),
                 ).fetchone()
-                if not user or not verify_password(password, user["password_hash"]):
+                if not user and email_raw:
+                    user = conn.execute(
+                        "SELECT * FROM users WHERE email = ?",
+                        (email_raw,),
+                    ).fetchone()
+                password_ok = False
+                if user:
+                    password_ok = verify_password(password_raw, user["password_hash"])
+                    if not password_ok and password_trim and password_trim != password_raw:
+                        password_ok = verify_password(password_trim, user["password_hash"])
+                if not user or not password_ok:
                     return json_response(self, 401, {"error": "Invalid credentials"})
                 token = secrets.token_hex(16)
                 conn.execute(
