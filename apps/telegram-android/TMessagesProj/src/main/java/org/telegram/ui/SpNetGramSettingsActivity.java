@@ -1,7 +1,6 @@
 package org.telegram.ui;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -11,11 +10,13 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SpNetGramApi;
+import org.telegram.messenger.SpNetGramConfig;
+import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
@@ -30,46 +31,61 @@ import java.util.Objects;
 
 public class SpNetGramSettingsActivity extends BaseFragment {
 
-    private static final String PREFS_NAME = "spnetgram_settings";
-    private static final String KEY_GHOST_MODE = "ghost_mode";
-    private static final String KEY_ANTI_REVOKE = "anti_revoke";
-    private static final String KEY_HIDE_TYPING = "hide_typing";
-    private static final String KEY_NO_READ = "no_read_receipts";
-
     private RecyclerListView listView;
     private ListAdapter adapter;
-    private SharedPreferences prefs;
 
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_TEXT = 1;
     private static final int VIEW_TYPE_CHECK = 2;
     private static final int VIEW_TYPE_INFO = 3;
 
+    private static final int ID_ACCESS_STATUS = 0;
     private static final int ID_ASSISTANT = 1;
     private static final int ID_SPG_ID = 2;
     private static final int ID_PREMIUM = 3;
     private static final int ID_SP_COIN = 4;
     private static final int ID_GEMS = 5;
+    private static final int ID_REDEEM_LICENSE = 6;
 
     private static final int ID_GHOST = 10;
     private static final int ID_ANTI_REVOKE = 11;
     private static final int ID_HIDE_TYPING = 12;
     private static final int ID_NO_READ = 13;
+    private static final int ID_QUICK_ACTIONS = 20;
+    private static final int ID_TRANSLATE_BAR = 21;
+    private static final int ID_EDIT_HISTORY = 22;
+    private static final int ID_SPAM_FILTER = 23;
+    private static final int ID_HIDE_SPONSORED = 24;
+    private static final int ID_UI_REDESIGN = 25;
+    private static final int ID_ENABLE_HIDDEN = 26;
+    private static final int ID_ENABLE_LOCKS = 27;
+    private static final int ID_MANAGE_HIDDEN = 30;
 
     private final ArrayList<ItemInner> oldItems = new ArrayList<>();
     private final ArrayList<ItemInner> items = new ArrayList<>();
 
+    private static final int ACCESS_UNKNOWN = 0;
+    private static final int ACCESS_ACTIVE = 1;
+    private static final int ACCESS_LOCKED = 2;
+    private int accessState = ACCESS_UNKNOWN;
+    private String accessValueText = null;
+
     @Override
     public boolean onFragmentCreate() {
-        prefs = ApplicationLoader.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         return super.onFragmentCreate();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshAccessStatus();
     }
 
     @Override
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(getString(R.string.SpNetGramSettings));
+        actionBar.setTitle(LocaleController.getString(R.string.SpNetGramSettings));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -110,6 +126,9 @@ public class SpNetGramSettingsActivity extends BaseFragment {
             ItemInner item = items.get(position);
             if (item.viewType == VIEW_TYPE_TEXT) {
                 switch (item.id) {
+                    case ID_ACCESS_STATUS:
+                        presentFragment(new SpNetGramLicenseGateActivity(false));
+                        break;
                     case ID_ASSISTANT:
                         presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_ASSISTANT));
                         break;
@@ -125,6 +144,12 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                     case ID_GEMS:
                         presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_GEMS));
                         break;
+                    case ID_REDEEM_LICENSE:
+                        presentFragment(new SpNetGramLicenseGateActivity(false));
+                        break;
+                    case ID_MANAGE_HIDDEN:
+                        presentFragment(new SpNetGramHiddenChatsActivity());
+                        break;
                 }
                 return;
             }
@@ -133,31 +158,64 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 boolean newValue = !cell.getCheckBox().isChecked();
                 cell.getCheckBox().setChecked(newValue, true);
                 if (item.id == ID_GHOST) {
-                    prefs.edit().putBoolean(KEY_GHOST_MODE, newValue).apply();
+                    SpNetGramConfig.setGhostMode(newValue);
                 } else if (item.id == ID_ANTI_REVOKE) {
-                    prefs.edit().putBoolean(KEY_ANTI_REVOKE, newValue).apply();
+                    SpNetGramConfig.setAntiRevokeEnabled(newValue);
                 } else if (item.id == ID_HIDE_TYPING) {
-                    prefs.edit().putBoolean(KEY_HIDE_TYPING, newValue).apply();
+                    SpNetGramConfig.setHideTypingEnabled(newValue);
                 } else if (item.id == ID_NO_READ) {
-                    prefs.edit().putBoolean(KEY_NO_READ, newValue).apply();
+                    SpNetGramConfig.setNoReadReceiptsEnabled(newValue);
+                } else if (item.id == ID_QUICK_ACTIONS) {
+                    SpNetGramConfig.setQuickActionsEnabled(newValue);
+                } else if (item.id == ID_TRANSLATE_BAR) {
+                    SpNetGramConfig.setTranslateBarEnabled(newValue);
+                } else if (item.id == ID_EDIT_HISTORY) {
+                    SpNetGramConfig.setEditHistoryEnabled(newValue);
+                } else if (item.id == ID_SPAM_FILTER) {
+                    SpNetGramConfig.setSpamFilterEnabled(newValue);
+                } else if (item.id == ID_HIDE_SPONSORED) {
+                    SpNetGramConfig.setHideSponsoredEnabled(newValue);
+                } else if (item.id == ID_UI_REDESIGN) {
+                    SpNetGramConfig.setUiRedesignEnabled(newValue);
+                } else if (item.id == ID_ENABLE_HIDDEN) {
+                    SpNetGramConfig.setHiddenChatsEnabled(newValue);
+                } else if (item.id == ID_ENABLE_LOCKS) {
+                    SpNetGramConfig.setChatLocksEnabled(newValue);
                 }
             }
         });
 
         updateItems(false);
+        refreshAccessStatus();
 
         return fragmentView;
     }
 
-    private boolean isEnabled(int id) {
+    private boolean isToggleEnabled(int id) {
         if (id == ID_GHOST) {
-            return prefs.getBoolean(KEY_GHOST_MODE, false);
+            return SpNetGramConfig.isGhostMode();
         } else if (id == ID_ANTI_REVOKE) {
-            return prefs.getBoolean(KEY_ANTI_REVOKE, false);
+            return SpNetGramConfig.isAntiRevokeEnabled();
         } else if (id == ID_HIDE_TYPING) {
-            return prefs.getBoolean(KEY_HIDE_TYPING, false);
+            return SpNetGramConfig.isHideTypingEnabled();
         } else if (id == ID_NO_READ) {
-            return prefs.getBoolean(KEY_NO_READ, false);
+            return SpNetGramConfig.isNoReadReceiptsEnabled();
+        } else if (id == ID_QUICK_ACTIONS) {
+            return SpNetGramConfig.isQuickActionsEnabled();
+        } else if (id == ID_TRANSLATE_BAR) {
+            return SpNetGramConfig.isTranslateBarEnabled();
+        } else if (id == ID_EDIT_HISTORY) {
+            return SpNetGramConfig.isEditHistoryEnabled();
+        } else if (id == ID_SPAM_FILTER) {
+            return SpNetGramConfig.isSpamFilterEnabled();
+        } else if (id == ID_HIDE_SPONSORED) {
+            return SpNetGramConfig.isHideSponsoredEnabled();
+        } else if (id == ID_UI_REDESIGN) {
+            return SpNetGramConfig.isUiRedesignEnabled();
+        } else if (id == ID_ENABLE_HIDDEN) {
+            return SpNetGramConfig.isHiddenChatsEnabled();
+        } else if (id == ID_ENABLE_LOCKS) {
+            return SpNetGramConfig.isChatLocksEnabled();
         }
         return false;
     }
@@ -167,20 +225,47 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         oldItems.addAll(items);
         items.clear();
 
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 0, getString(R.string.SpNetGramSectionTitle)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_ASSISTANT, getString(R.string.SpNetGramAssistant)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SPG_ID, getString(R.string.SpNetGramId)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_PREMIUM, getString(R.string.SpNetGramPremiumPlan)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SP_COIN, getString(R.string.SpNetGramCoinAirdrop)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_GEMS, getString(R.string.SpNetGramGems)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 6, getString(R.string.SpNetGramFeaturesInfo)));
+        if (accessValueText == null) {
+            accessValueText = LocaleController.getString(R.string.SpNetGramAccessUnknown);
+        }
 
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 7, getString(R.string.SpNetGramPrivacySection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_GHOST, getString(R.string.SpNetGramGhostMode), getString(R.string.SpNetGramGhostModeInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ANTI_REVOKE, getString(R.string.SpNetGramAntiRevoke), getString(R.string.SpNetGramAntiRevokeInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_HIDE_TYPING, getString(R.string.SpNetGramHideTyping), getString(R.string.SpNetGramHideTypingInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_NO_READ, getString(R.string.SpNetGramNoReadReceipts), getString(R.string.SpNetGramNoReadReceiptsInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 15, getString(R.string.SpNetGramPrivacyInfo)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_ACCESS_STATUS, LocaleController.getString(R.string.SpNetGramAccess), accessValueText));
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 0, LocaleController.getString(R.string.SpNetGramSectionTitle)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_ASSISTANT, LocaleController.getString(R.string.SpNetGramAssistant)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SPG_ID, LocaleController.getString(R.string.SpNetGramId)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_PREMIUM, LocaleController.getString(R.string.SpNetGramPremiumPlan)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SP_COIN, LocaleController.getString(R.string.SpNetGramCoinAirdrop)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_GEMS, LocaleController.getString(R.string.SpNetGramGems)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_REDEEM_LICENSE, LocaleController.getString(R.string.SpNetGramRedeemLicense)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 6, LocaleController.getString(R.string.SpNetGramFeaturesInfo)));
+
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 7, LocaleController.getString(R.string.SpNetGramPrivacySection)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_GHOST, LocaleController.getString(R.string.SpNetGramGhostMode), LocaleController.getString(R.string.SpNetGramGhostModeInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ANTI_REVOKE, LocaleController.getString(R.string.SpNetGramAntiRevoke), LocaleController.getString(R.string.SpNetGramAntiRevokeInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_HIDE_TYPING, LocaleController.getString(R.string.SpNetGramHideTyping), LocaleController.getString(R.string.SpNetGramHideTypingInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_NO_READ, LocaleController.getString(R.string.SpNetGramNoReadReceipts), LocaleController.getString(R.string.SpNetGramNoReadReceiptsInfo)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 15, LocaleController.getString(R.string.SpNetGramPrivacyInfo)));
+
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 16, LocaleController.getString(R.string.SpNetGramChatSection)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_QUICK_ACTIONS, LocaleController.getString(R.string.SpNetGramQuickActions), LocaleController.getString(R.string.SpNetGramQuickActionsInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_TRANSLATE_BAR, LocaleController.getString(R.string.SpNetGramTranslateBar), LocaleController.getString(R.string.SpNetGramTranslateBarInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_EDIT_HISTORY, LocaleController.getString(R.string.SpNetGramEditHistory), LocaleController.getString(R.string.SpNetGramEditHistoryInfo)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 20, LocaleController.getString(R.string.SpNetGramChatSectionInfo)));
+
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 21, LocaleController.getString(R.string.SpNetGramFiltersSection)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_SPAM_FILTER, LocaleController.getString(R.string.SpNetGramSpamFilter), LocaleController.getString(R.string.SpNetGramSpamFilterInfo)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_HIDE_SPONSORED, LocaleController.getString(R.string.SpNetGramHideSponsored), LocaleController.getString(R.string.SpNetGramHideSponsoredInfo)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 24, LocaleController.getString(R.string.SpNetGramFiltersSectionInfo)));
+
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 25, LocaleController.getString(R.string.SpNetGramSecuritySection)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ENABLE_HIDDEN, LocaleController.getString(R.string.SpNetGramHiddenChatsToggle), LocaleController.getString(R.string.SpNetGramHiddenChatsInfo)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_MANAGE_HIDDEN, LocaleController.getString(R.string.SpNetGramManageHiddenChats)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ENABLE_LOCKS, LocaleController.getString(R.string.SpNetGramChatLocks), LocaleController.getString(R.string.SpNetGramChatLocksInfo)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 28, LocaleController.getString(R.string.SpNetGramSecuritySectionInfo)));
+
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 29, LocaleController.getString(R.string.SpNetGramUiSection)));
+        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_UI_REDESIGN, LocaleController.getString(R.string.SpNetGramUiRedesign), LocaleController.getString(R.string.SpNetGramUiRedesignInfo)));
+        items.add(new ItemInner(VIEW_TYPE_INFO, 32, LocaleController.getString(R.string.SpNetGramUiSectionInfo)));
 
         if (adapter == null) {
             return;
@@ -219,6 +304,29 @@ public class SpNetGramSettingsActivity extends BaseFragment {
     }
 
     private class ListAdapter extends AdapterWithDiffUtils {
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (position < 0 || position >= items.size()) {
+                return VIEW_TYPE_INFO;
+            }
+            return items.get(position).viewType;
+        }
+
+        @Override
+        public boolean isEnabled(RecyclerView.ViewHolder holder) {
+            int position = holder.getAdapterPosition();
+            if (position < 0 || position >= items.size()) {
+                return false;
+            }
+            int type = items.get(position).viewType;
+            return type == VIEW_TYPE_TEXT || type == VIEW_TYPE_CHECK;
+        }
+
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -246,16 +354,79 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 ((HeaderCell) holder.itemView).setText(item.text);
             } else if (holder.getItemViewType() == VIEW_TYPE_TEXT) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                cell.setText(item.text, divider);
+                if (item.value != null) {
+                    cell.setTextAndValue(item.text, item.value, divider);
+                    if (item.id == ID_ACCESS_STATUS) {
+                        int color = Theme.getColor(Theme.key_windowBackgroundWhiteValueText);
+                        if (accessState == ACCESS_ACTIVE) {
+                            color = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText);
+                        } else if (accessState == ACCESS_LOCKED) {
+                            color = Theme.getColor(Theme.key_text_RedBold);
+                        }
+                        cell.setTextValueColor(color);
+                    }
+                } else {
+                    cell.setText(item.text, divider);
+                }
             } else if (holder.getItemViewType() == VIEW_TYPE_CHECK) {
                 TextCheckCell cell = (TextCheckCell) holder.itemView;
                 String value = item.value != null ? item.value.toString() : "";
-                cell.setTextAndValueAndCheck(item.text.toString(), value, isEnabled(item.id), true, divider);
+                cell.setTextAndValueAndCheck(item.text.toString(), value, isToggleEnabled(item.id), true, divider);
             } else {
                 TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                 cell.setText(item.text);
                 cell.setFixedSize(0);
             }
         }
+    }
+
+    private void refreshAccessStatus() {
+        String token = SpNetGramConfig.getBackendToken();
+        if (token == null || token.isEmpty()) {
+            accessState = ACCESS_LOCKED;
+            accessValueText = buildAccessValue(false, null);
+            updateItems(true);
+            return;
+        }
+        SpNetGramApi.accessStatus(token, json -> {
+            if (json == null) {
+                accessState = ACCESS_UNKNOWN;
+                accessValueText = buildAccessValue(null, null);
+            } else {
+                boolean canUse = json.optBoolean("canUse", false);
+                String expiresAt = null;
+                if (json.has("premium")) {
+                    try {
+                        expiresAt = json.getJSONObject("premium").optString("expiresAt", null);
+                    } catch (Exception ignore) {
+                        expiresAt = null;
+                    }
+                }
+                accessState = canUse ? ACCESS_ACTIVE : ACCESS_LOCKED;
+                accessValueText = buildAccessValue(canUse, expiresAt);
+            }
+            updateItems(true);
+        });
+    }
+
+    private String buildAccessValue(Boolean canUse, String expiresAt) {
+        String status;
+        if (canUse == null) {
+            status = LocaleController.getString(R.string.SpNetGramAccessUnknown);
+        } else if (canUse) {
+            status = LocaleController.getString(R.string.SpNetGramAccessActive);
+        } else {
+            status = LocaleController.getString(R.string.SpNetGramAccessLocked);
+        }
+
+        String expiryText;
+        if (expiresAt == null || expiresAt.isEmpty()) {
+            expiryText = LocaleController.getString(R.string.SpNetGramAccessNoExpiry);
+        } else {
+            String date = expiresAt.length() >= 10 ? expiresAt.substring(0, 10) : expiresAt;
+            expiryText = LocaleController.formatString(R.string.SpNetGramAccessExpires, date);
+        }
+
+        return status + " · " + expiryText;
     }
 }

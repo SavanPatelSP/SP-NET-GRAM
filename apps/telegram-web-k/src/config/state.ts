@@ -184,14 +184,44 @@ export type CommonState = {
 export type SpNetGramState = {
   spgId?: string,
   premium?: boolean,
+  premiumStatus?: {
+    planId?: string,
+    status?: string,
+    expiresAt?: string,
+    platform?: string | null
+  },
+  premiumPlans?: Array<{
+    id: string,
+    name: string,
+    price: number,
+    perks?: string[]
+  }>,
   wallet?: string,
   airdropClaimed?: boolean,
+  spCoin?: number,
   gems?: number,
+  airdrop?: {
+    canClaim?: boolean,
+    nextClaimAt?: string,
+    lastClaimAt?: string,
+    cooldownHours?: number
+  },
+  gemsStatus?: {
+    canClaim?: boolean,
+    nextClaimAt?: string,
+    lastClaimAt?: string,
+    cooldownHours?: number
+  },
   assistantLast?: string,
   ghostMode?: boolean,
   antiRevoke?: boolean,
   hideTyping?: boolean,
-  noReadReceipts?: boolean
+  noReadReceipts?: boolean,
+  access?: {
+    canUse?: boolean,
+    expiresAt?: string,
+    checkedAt?: number
+  }
 };
 
 // const BACKGROUND_DAY_MOBILE: Background = {

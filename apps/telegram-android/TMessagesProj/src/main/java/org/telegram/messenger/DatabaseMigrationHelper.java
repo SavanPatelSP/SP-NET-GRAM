@@ -1604,6 +1604,12 @@ public class DatabaseMigrationHelper {
             version = 168;
         }
 
+        if (version == 168) {
+            database.executeFast("CREATE TABLE IF NOT EXISTS spnetgram_edits(mid INTEGER, uid INTEGER, date INTEGER, text TEXT, PRIMARY KEY(mid, uid, date));").stepThis().dispose();
+            database.executeFast("PRAGMA user_version = 169").stepThis().dispose();
+            version = 169;
+        }
+
         return version;
     }
 

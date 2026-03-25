@@ -1,0 +1,134 @@
+.spnet-license-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 12, 18, 0.72);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.is-locked .spnet-license-gate__close {
+    display: none;
+  }
+}
+
+.spnet-license-gate__card {
+  width: min(560px, 92vw);
+  background: var(--surface-color);
+  color: var(--primary-text-color);
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.spnet-license-gate__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 0;
+  }
+}
+
+.spnet-license-gate__close {
+  background: transparent;
+  border: none;
+  color: var(--secondary-text-color);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.spnet-license-gate__subtitle {
+  margin: 0;
+  color: var(--secondary-text-color);
+}
+
+.spnet-license-gate__status {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--secondary-text-color);
+
+  &[data-state='error'] {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.12);
+  }
+}
+
+.spnet-license-gate__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.spnet-license-gate__input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--input-search-border-color);
+  background: var(--input-search-background-color);
+  color: var(--primary-text-color);
+  font-size: 0.95rem;
+}
+
+.spnet-license-gate__actions,
+.spnet-license-gate__footer {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.spnet-license-gate__button {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  background: var(--input-search-background-color);
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &.primary {
+    background: var(--primary-color, #4aa7ff);
+    color: #fff;
+  }
+
+  &.ghost {
+    background: transparent;
+    border-color: var(--input-search-border-color);
+  }
+}
+
+.spnet-access-badge {
+  background: var(--primary-color, #4aa7ff);
+
+  &.spnet-access-badge--locked {
+    background: #ff6b6b;
+  }
+
+  &.spnet-access-badge--unknown {
+    background: #94a3b8;
+  }
+}

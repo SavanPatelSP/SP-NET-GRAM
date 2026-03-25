@@ -40,6 +40,7 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
@@ -1465,6 +1466,17 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         ArrayList<TLRPC.Dialog> array = parentFragment.getDialogsArray(currentAccount, dialogsType, folderId, dialogsListFrozen);
         if (array == null) {
             array = new ArrayList<>();
+        }
+        if (SpNetGramConfig.isHiddenChatsEnabled() && dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT && folderId == 0 && !parentFragment.isArchive()) {
+            HashSet<String> hidden = new HashSet<>(SpNetGramConfig.getHiddenDialogs());
+            if (!hidden.isEmpty()) {
+                for (int i = 0; i < array.size(); i++) {
+                    if (hidden.contains(String.valueOf(array.get(i).id))) {
+                        array.remove(i);
+                        i--;
+                    }
+                }
+            }
         }
         dialogsCount = array.size();
         isEmpty = false;

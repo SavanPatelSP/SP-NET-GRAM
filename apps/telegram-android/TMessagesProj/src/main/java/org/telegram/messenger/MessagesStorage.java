@@ -111,7 +111,7 @@ public class MessagesStorage extends BaseController {
         }
     }
 
-    public final static int LAST_DB_VERSION = 168;
+    public final static int LAST_DB_VERSION = 169;
     private boolean databaseMigrationInProgress;
     public boolean showClearDatabaseAlert;
 
@@ -745,6 +745,7 @@ public class MessagesStorage extends BaseController {
         database.executeFast("CREATE TABLE star_gifts2(id INTEGER PRIMARY KEY, data BLOB, hash INTEGER, time INTEGER, pos INTEGER);").stepThis().dispose();
 
         database.executeFast("CREATE TABLE gift_themes (slug TEXT PRIMARY KEY, data BLOB);").stepThis().dispose();
+        database.executeFast("CREATE TABLE spnetgram_edits(mid INTEGER, uid INTEGER, date INTEGER, text TEXT, PRIMARY KEY(mid, uid, date));").stepThis().dispose();
 
         database.executeFast("PRAGMA user_version = " + MessagesStorage.LAST_DB_VERSION).stepThis().dispose();
 
@@ -7580,6 +7581,61 @@ public class MessagesStorage extends BaseController {
             checkSQLException(e);
         }
         return ref.get();
+    }
+
+    public static class SpNetGramEdit {
+        public final int date;
+        public final String text;
+
+        public SpNetGramEdit(int date, String text) {
+            this.date = date;
+            this.text = text;
+        }
+    }
+
+    public void saveSpNetGramEditHistory(long dialogId, int msgId, int date, String text) {
+        if (!SpNetGramConfig.isEditHistoryEnabled() || text == null) {
+            return;
+        }
+        storageQueue.postRunnable(() -> {
+            SQLitePreparedStatement state = null;
+            try {
+                state = database.executeFast("REPLACE INTO spnetgram_edits(mid, uid, date, text) VALUES(?, ?, ?, ?)");
+                state.bindInteger(1, msgId);
+                state.bindLong(2, dialogId);
+                state.bindInteger(3, date);
+                state.bindString(4, text);
+                state.step();
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (state != null) {
+                    state.dispose();
+                }
+            }
+        });
+    }
+
+    public void getSpNetGramEditHistory(long dialogId, int msgId, Utilities.Callback<ArrayList<SpNetGramEdit>> onResult) {
+        storageQueue.postRunnable(() -> {
+            ArrayList<SpNetGramEdit> edits = new ArrayList<>();
+            SQLiteCursor cursor = null;
+            try {
+                cursor = database.queryFinalized("SELECT date, text FROM spnetgram_edits WHERE uid = " + dialogId + " AND mid = " + msgId + " ORDER BY date DESC");
+                while (cursor.next()) {
+                    int date = cursor.intValue(0);
+                    String text = cursor.stringValue(1);
+                    edits.add(new SpNetGramEdit(date, text));
+                }
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (cursor != null) {
+                    cursor.dispose();
+                }
+            }
+            AndroidUtilities.runOnUIThread(() -> onResult.run(edits));
+        });
     }
 
     public boolean hasInviteMeMessage(long chatId) {

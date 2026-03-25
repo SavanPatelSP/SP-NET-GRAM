@@ -8,6 +8,7 @@ import blurActiveElement from '@helpers/dom/blurActiveElement';
 import loadFonts from '@helpers/dom/loadFonts';
 import rootScope from '@lib/rootScope';
 import Page from '@/pages/page';
+import {ensureLicenseAccess, startAccessRefreshTimer} from '@lib/spnet/licenseGate';
 
 const onFirstMount = () => {
   rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignedIn'});
@@ -28,6 +29,8 @@ const onFirstMount = () => {
     setTimeout(() => {
       document.getElementById('auth-pages').remove();
     }, 1e3);
+    ensureLicenseAccess();
+    startAccessRefreshTimer();
   });
 };
 

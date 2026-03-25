@@ -10953,6 +10953,9 @@ public class MessagesController extends BaseController implements NotificationCe
         if (action < 0 || action >= sendingTypings.length || dialogId == 0) {
             return false;
         }
+        if (SpNetGramConfig.isHideTypingEnabled()) {
+            return false;
+        }
         final long selfId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
         if (dialogId == selfId) {
             return false;
@@ -14007,6 +14010,9 @@ public class MessagesController extends BaseController implements NotificationCe
         if (randomId == 0 || dialogId == 0 || ttl <= 0 && ttl != Integer.MIN_VALUE) {
             return;
         }
+        if (SpNetGramConfig.isNoReadReceiptsEnabled()) {
+            return;
+        }
         if (!DialogObject.isEncryptedDialog(dialogId)) {
             return;
         }
@@ -14024,6 +14030,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     private void completeReadTask(ReadTask task) {
+        if (SpNetGramConfig.isNoReadReceiptsEnabled()) {
+            return;
+        }
         if (task.replyId != 0 && task.monoForumPeerId == 0) {
             TLRPC.TL_messages_readDiscussion req = new TLRPC.TL_messages_readDiscussion();
             req.msg_id = (int) task.replyId;
@@ -14127,6 +14136,9 @@ public class MessagesController extends BaseController implements NotificationCe
 
     public void markMentionsAsRead(long dialogId, long topicId) {
         if (DialogObject.isEncryptedDialog(dialogId) || dialogId == getUserConfig().getClientUserId()) {
+            return;
+        }
+        if (SpNetGramConfig.isNoReadReceiptsEnabled()) {
             return;
         }
         getMessagesStorage().resetMentionsCount(dialogId, topicId, 0);
@@ -17955,6 +17967,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TLRPC.TL_updateDeleteMessages) {
+                if (SpNetGramConfig.isAntiRevokeEnabled()) {
+                    continue;
+                }
                 TLRPC.TL_updateDeleteMessages update = (TLRPC.TL_updateDeleteMessages) baseUpdate;
                 if (deletedMessages == null) {
                     deletedMessages = new LongSparseArray<>();
@@ -18474,6 +18489,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 dialogs_read_outbox_max.put(dialogId, Math.max(value, update.max_id));
             } else if (baseUpdate instanceof TLRPC.TL_updateDeleteChannelMessages) {
+                if (SpNetGramConfig.isAntiRevokeEnabled()) {
+                    continue;
+                }
                 TLRPC.TL_updateDeleteChannelMessages update = (TLRPC.TL_updateDeleteChannelMessages) baseUpdate;
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d(baseUpdate + " channelId = " + update.channel_id);
@@ -18628,6 +18646,14 @@ public class MessagesController extends BaseController implements NotificationCe
 
                 ImageLoader.saveMessageThumbs(message);
                 AndroidUtilities.runOnUIThread(()-> getSendMessagesHelper().onMessageEdited(message));
+
+                if (SpNetGramConfig.isEditHistoryEnabled()) {
+                    TLRPC.Message previous = getMessagesStorage().getMessage(message.dialog_id, message.id);
+                    if (previous != null && !TextUtils.isEmpty(previous.message) && !TextUtils.equals(previous.message, message.message)) {
+                        int editDate = previous.edit_date != 0 ? previous.edit_date : previous.date;
+                        getMessagesStorage().saveSpNetGramEditHistory(message.dialog_id, message.id, editDate, previous.message);
+                    }
+                }
 
                 boolean isDialogCreated = createdDialogIds.contains(message.dialog_id);
                 MessageObject obj = new MessageObject(currentAccount, message, usersDict, chatsDict, isDialogCreated, isDialogCreated);
@@ -22927,6 +22953,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isSponsoredDisabled() {
+        if (SpNetGramConfig.isHideSponsoredEnabled()) {
+            return true;
+        }
         TLRPC.UserFull userFull = getUserFull(getUserConfig().getClientUserId());
         if (userFull == null) return false;
         return !userFull.sponsored_enabled;

@@ -10,10 +10,13 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.Utilities;
+import org.telegram.messenger.SpNetGramApi;
+import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -22,11 +25,6 @@ import org.telegram.ui.Components.LayoutHelper;
 public class SpNetGramFeatureActivity extends BaseFragment {
 
     private static final String PREFS_NAME = "spnetgram_settings";
-    private static final String KEY_SPG_ID = "spg_id";
-    private static final String KEY_PREMIUM = "premium_active";
-    private static final String KEY_WALLET = "spcoin_wallet";
-    private static final String KEY_AIRDROP = "spcoin_airdrop_claimed";
-    private static final String KEY_GEMS = "gems_balance";
     private static final String KEY_ASSISTANT_LAST = "assistant_last";
 
     public static final String FEATURE_ASSISTANT = "assistant";
@@ -86,109 +84,101 @@ public class SpNetGramFeatureActivity extends BaseFragment {
 
     private CharSequence getTitleForFeature() {
         if (FEATURE_ASSISTANT.equals(feature)) {
-            return getString(R.string.SpNetGramAssistant);
+            return LocaleController.getString(R.string.SpNetGramAssistant);
         } else if (FEATURE_SPG_ID.equals(feature)) {
-            return getString(R.string.SpNetGramId);
+            return LocaleController.getString(R.string.SpNetGramId);
         } else if (FEATURE_PREMIUM.equals(feature)) {
-            return getString(R.string.SpNetGramPremiumPlan);
+            return LocaleController.getString(R.string.SpNetGramPremiumPlan);
         } else if (FEATURE_SP_COIN.equals(feature)) {
-            return getString(R.string.SpNetGramCoinAirdrop);
+            return LocaleController.getString(R.string.SpNetGramCoinAirdrop);
         } else if (FEATURE_GEMS.equals(feature)) {
-            return getString(R.string.SpNetGramGems);
+            return LocaleController.getString(R.string.SpNetGramGems);
         }
-        return getString(R.string.SpNetGramSettings);
+        return LocaleController.getString(R.string.SpNetGramSettings);
     }
 
     private CharSequence getDescriptionForFeature() {
         if (FEATURE_ASSISTANT.equals(feature)) {
-            return getString(R.string.SpNetGramAssistantInfo);
+            return LocaleController.getString(R.string.SpNetGramAssistantInfo);
         } else if (FEATURE_SPG_ID.equals(feature)) {
-            return getString(R.string.SpNetGramIdInfo);
+            return LocaleController.getString(R.string.SpNetGramIdInfo);
         } else if (FEATURE_PREMIUM.equals(feature)) {
-            return getString(R.string.SpNetGramPremiumPlanInfo);
+            return LocaleController.getString(R.string.SpNetGramPremiumPlanInfo);
         } else if (FEATURE_SP_COIN.equals(feature)) {
-            return getString(R.string.SpNetGramCoinAirdropInfo);
+            return LocaleController.getString(R.string.SpNetGramCoinAirdropInfo);
         } else if (FEATURE_GEMS.equals(feature)) {
-            return getString(R.string.SpNetGramGemsInfo);
+            return LocaleController.getString(R.string.SpNetGramGemsInfo);
         }
-        return getString(R.string.SpNetGramInfoDefault);
+        return LocaleController.getString(R.string.SpNetGramInfoDefault);
     }
 
     private void addFeatureContent(Context context, LinearLayout container) {
         if (FEATURE_ASSISTANT.equals(feature)) {
-            final TextView status = createStatusText(context, getString(R.string.SpNetGramAssistantStatusReady));
-            final TextView output = createBodyText(context, prefs.getString(KEY_ASSISTANT_LAST, getString(R.string.SpNetGramAssistantDefaultResponse)));
+            final TextView status = createStatusText(context, LocaleController.getString(R.string.SpNetGramStatusLoading));
+            final TextView output = createBodyText(context, prefs.getString(KEY_ASSISTANT_LAST, LocaleController.getString(R.string.SpNetGramAssistantDefaultResponse)));
             container.addView(status);
             container.addView(output);
 
-            TextView action = createActionButton(context, getString(R.string.SpNetGramAssistantRunDemo));
-            action.setOnClickListener(v -> {
-                String response = getString(R.string.SpNetGramAssistantDemoResponse);
-                prefs.edit().putString(KEY_ASSISTANT_LAST, response).apply();
-                output.setText(response);
-            });
+            TextView action = createActionButton(context, LocaleController.getString(R.string.SpNetGramAssistantRunDemo));
+            action.setOnClickListener(v -> runAssistant(status, output));
             container.addView(action);
+            updateAssistantStatus(status);
             return;
         }
 
         if (FEATURE_SPG_ID.equals(feature)) {
-            final TextView status = createStatusText(context, buildSpgStatus());
+            final TextView status = createStatusText(context, LocaleController.getString(R.string.SpNetGramStatusLoading));
             container.addView(status);
-            TextView action = createActionButton(context, getString(R.string.SpNetGramMintSpgId));
-            action.setOnClickListener(v -> {
-                String spgId = generateSpgId();
-                prefs.edit().putString(KEY_SPG_ID, spgId).apply();
-                status.setText(buildSpgStatus());
-            });
+            TextView action = createActionButton(context, LocaleController.getString(R.string.SpNetGramMintSpgId));
+            action.setOnClickListener(v -> mintSpgId(status));
             container.addView(action);
+            loadSpgStatus(status);
             return;
         }
 
         if (FEATURE_PREMIUM.equals(feature)) {
-            final TextView status = createStatusText(context, buildPremiumStatus());
+            final TextView status = createStatusText(context, LocaleController.getString(R.string.SpNetGramStatusLoading));
             container.addView(status);
-            TextView action = createActionButton(context, getString(R.string.SpNetGramTogglePremium));
-            action.setOnClickListener(v -> {
-                boolean current = prefs.getBoolean(KEY_PREMIUM, false);
-                prefs.edit().putBoolean(KEY_PREMIUM, !current).apply();
-                status.setText(buildPremiumStatus());
-            });
+            TextView action = createActionButton(context, LocaleController.getString(R.string.SpNetGramManageAccess));
+            action.setOnClickListener(v -> presentFragment(new SpNetGramLicenseGateActivity(false)));
             container.addView(action);
+            loadPremiumStatus(status, action);
             return;
         }
 
         if (FEATURE_SP_COIN.equals(feature)) {
-            final TextView status = createStatusText(context, buildSpCoinStatus());
+            final TextView status = createStatusText(context, LocaleController.getString(R.string.SpNetGramStatusLoading));
             container.addView(status);
-
-            TextView linkWallet = createActionButton(context, getString(R.string.SpNetGramLinkWallet));
-            linkWallet.setOnClickListener(v -> {
-                if (TextUtils.isEmpty(prefs.getString(KEY_WALLET, ""))) {
-                    prefs.edit().putString(KEY_WALLET, generateWallet()).apply();
+            final boolean[] canClaim = new boolean[] {false};
+            TextView action = createActionButton(context, LocaleController.getString(R.string.SpNetGramRefresh));
+            action.setOnClickListener(v -> {
+                if (!ensureSignedIn()) return;
+                if (canClaim[0]) {
+                    claimAirdrop(status, action, canClaim);
+                } else {
+                    loadCoinStatus(status, action, canClaim);
                 }
-                status.setText(buildSpCoinStatus());
             });
-            container.addView(linkWallet);
-
-            TextView claim = createActionButton(context, getString(R.string.SpNetGramClaimAirdrop));
-            claim.setOnClickListener(v -> {
-                prefs.edit().putBoolean(KEY_AIRDROP, true).apply();
-                status.setText(buildSpCoinStatus());
-            });
-            container.addView(claim);
+            container.addView(action);
+            loadCoinStatus(status, action, canClaim);
             return;
         }
 
         if (FEATURE_GEMS.equals(feature)) {
-            final TextView status = createStatusText(context, buildGemsStatus());
+            final TextView status = createStatusText(context, LocaleController.getString(R.string.SpNetGramStatusLoading));
             container.addView(status);
-            TextView action = createActionButton(context, getString(R.string.SpNetGramClaimGems));
+            final boolean[] canClaim = new boolean[] {false};
+            TextView action = createActionButton(context, LocaleController.getString(R.string.SpNetGramRefresh));
             action.setOnClickListener(v -> {
-                int current = prefs.getInt(KEY_GEMS, 0);
-                prefs.edit().putInt(KEY_GEMS, current + 10).apply();
-                status.setText(buildGemsStatus());
+                if (!ensureSignedIn()) return;
+                if (canClaim[0]) {
+                    claimGems(status, action, canClaim);
+                } else {
+                    loadGemsStatus(status, action, canClaim);
+                }
             });
             container.addView(action);
+            loadGemsStatus(status, action, canClaim);
         }
     }
 
@@ -227,47 +217,220 @@ public class SpNetGramFeatureActivity extends BaseFragment {
         return button;
     }
 
-    private String buildSpgStatus() {
-        String spgId = prefs.getString(KEY_SPG_ID, "");
-        if (TextUtils.isEmpty(spgId)) {
-            return getString(R.string.SpNetGramSpgStatusMissing);
+    private boolean ensureSignedIn() {
+        String token = SpNetGramConfig.getBackendToken();
+        if (!TextUtils.isEmpty(token)) {
+            return true;
         }
-        return getString(R.string.SpNetGramSpgStatusReady, spgId);
+        presentFragment(new SpNetGramLicenseGateActivity(false));
+        return false;
     }
 
-    private String buildPremiumStatus() {
-        boolean active = prefs.getBoolean(KEY_PREMIUM, false);
-        return active ? getString(R.string.SpNetGramPremiumActive) : getString(R.string.SpNetGramPremiumInactive);
+    private void setStatus(TextView view, CharSequence text, boolean error) {
+        if (view == null) return;
+        view.setText(text);
+        int color = error ? Theme.getColor(Theme.key_text_RedBold) : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
+        view.setTextColor(color);
     }
 
-    private String buildSpCoinStatus() {
-        String wallet = prefs.getString(KEY_WALLET, "");
-        boolean claimed = prefs.getBoolean(KEY_AIRDROP, false);
-        String walletLabel = TextUtils.isEmpty(wallet) ? getString(R.string.SpNetGramWalletNotLinked) : getString(R.string.SpNetGramWalletLinked, wallet);
-        String airdropLabel = claimed ? getString(R.string.SpNetGramAirdropClaimed) : getString(R.string.SpNetGramAirdropUnclaimed);
-        return walletLabel + "\n" + airdropLabel;
+    private String formatDate(String value) {
+        if (TextUtils.isEmpty(value)) return "";
+        return value.length() >= 10 ? value.substring(0, 10) : value;
     }
 
-    private String buildGemsStatus() {
-        int balance = prefs.getInt(KEY_GEMS, 0);
-        return getString(R.string.SpNetGramGemsBalance, balance);
-    }
-
-    private String generateSpgId() {
-        final String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        StringBuilder sb = new StringBuilder("SPG-");
-        for (int i = 0; i < 8; i++) {
-            sb.append(chars.charAt(Utilities.random.nextInt(chars.length())));
+    private void updateAssistantStatus(TextView status) {
+        if (TextUtils.isEmpty(SpNetGramConfig.getBackendToken())) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
         }
-        return sb.toString();
+        setStatus(status, LocaleController.getString(R.string.SpNetGramAssistantStatusReady), false);
     }
 
-    private String generateWallet() {
-        final String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        StringBuilder sb = new StringBuilder("SPW-");
-        for (int i = 0; i < 10; i++) {
-            sb.append(chars.charAt(Utilities.random.nextInt(chars.length())));
+    private void runAssistant(TextView status, TextView output) {
+        if (!ensureSignedIn()) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
         }
-        return sb.toString();
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        String token = SpNetGramConfig.getBackendToken();
+        SpNetGramApi.assistantChat(token, "Run the SP NET GRAM assistant demo.", "general", json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            String reply = json.optString("reply", "");
+            if (TextUtils.isEmpty(reply)) {
+                reply = LocaleController.getString(R.string.SpNetGramAssistantDefaultResponse);
+            }
+            output.setText(reply);
+            prefs.edit().putString(KEY_ASSISTANT_LAST, reply).apply();
+            setStatus(status, LocaleController.getString(R.string.SpNetGramAssistantStatusReady), false);
+        });
+    }
+
+    private void loadSpgStatus(TextView status) {
+        String token = SpNetGramConfig.getBackendToken();
+        if (TextUtils.isEmpty(token)) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        SpNetGramApi.getProfile(token, json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            String spgId = json.optString("spgId", "");
+            if (TextUtils.isEmpty(spgId)) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramSpgStatusMissing), false);
+            } else {
+                setStatus(status, LocaleController.formatString(R.string.SpNetGramSpgStatusReady, spgId), false);
+            }
+        });
+    }
+
+    private void mintSpgId(TextView status) {
+        if (!ensureSignedIn()) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        String token = SpNetGramConfig.getBackendToken();
+        SpNetGramApi.mintSpgId(token, json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            String spgId = json.optString("spgId", "");
+            if (TextUtils.isEmpty(spgId)) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramSpgStatusMissing), false);
+            } else {
+                setStatus(status, LocaleController.formatString(R.string.SpNetGramSpgStatusReady, spgId), false);
+            }
+        });
+    }
+
+    private void loadPremiumStatus(TextView status, TextView action) {
+        String token = SpNetGramConfig.getBackendToken();
+        if (TextUtils.isEmpty(token)) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            action.setText(LocaleController.getString(R.string.SpNetGramManageAccess));
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        SpNetGramApi.premiumStatus(token, json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            JSONObject premium = json.optJSONObject("premium");
+            if (premium == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramPremiumInactive), false);
+                action.setText(LocaleController.getString(R.string.SpNetGramUpgrade));
+                return;
+            }
+            String planId = premium.optString("planId", "free");
+            String state = premium.optString("status", "inactive");
+            boolean active = "active".equals(state) && !"free".equals(planId);
+            String planLabel = LocaleController.formatString(R.string.SpNetGramPremiumPlanLabel, planId);
+            String statusLabel = active
+                ? LocaleController.getString(R.string.SpNetGramPremiumActive)
+                : LocaleController.getString(R.string.SpNetGramPremiumInactive);
+            String expiresAt = premium.optString("expiresAt", "");
+            String expiryLabel = TextUtils.isEmpty(expiresAt)
+                ? LocaleController.getString(R.string.SpNetGramAccessNoExpiry)
+                : LocaleController.formatString(R.string.SpNetGramAccessExpires, formatDate(expiresAt));
+            setStatus(status, planLabel + "\n" + statusLabel + "\n" + expiryLabel, false);
+            action.setText(LocaleController.getString(active ? R.string.SpNetGramManageAccess : R.string.SpNetGramUpgrade));
+        });
+    }
+
+    private void loadCoinStatus(TextView status, TextView action, boolean[] canClaim) {
+        String token = SpNetGramConfig.getBackendToken();
+        if (TextUtils.isEmpty(token)) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            action.setText(LocaleController.getString(R.string.SpNetGramManageAccess));
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        SpNetGramApi.walletStatus(token, json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            int spCoin = json.optInt("spCoin", 0);
+            JSONObject airdrop = json.optJSONObject("airdrop");
+            boolean claimReady = airdrop != null && airdrop.optBoolean("canClaim", false);
+            String nextClaim = airdrop != null ? airdrop.optString("nextClaimAt", "") : "";
+            canClaim[0] = claimReady;
+            String balanceText = LocaleController.formatString(R.string.SpNetGramCoinBalance, spCoin);
+            String airdropText;
+            if (claimReady) {
+                airdropText = LocaleController.getString(R.string.SpNetGramAirdropReady);
+            } else if (!TextUtils.isEmpty(nextClaim)) {
+                airdropText = LocaleController.formatString(R.string.SpNetGramAirdropNext, formatDate(nextClaim));
+            } else {
+                airdropText = LocaleController.getString(R.string.SpNetGramAirdropClaimed);
+            }
+            setStatus(status, balanceText + "\n" + airdropText, false);
+            action.setText(LocaleController.getString(claimReady ? R.string.SpNetGramClaimAirdrop : R.string.SpNetGramRefresh));
+        });
+    }
+
+    private void claimAirdrop(TextView status, TextView action, boolean[] canClaim) {
+        if (!ensureSignedIn()) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        String token = SpNetGramConfig.getBackendToken();
+        SpNetGramApi.claimAirdrop(token, json -> {
+            loadCoinStatus(status, action, canClaim);
+        });
+    }
+
+    private void loadGemsStatus(TextView status, TextView action, boolean[] canClaim) {
+        String token = SpNetGramConfig.getBackendToken();
+        if (TextUtils.isEmpty(token)) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            action.setText(LocaleController.getString(R.string.SpNetGramManageAccess));
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        SpNetGramApi.walletStatus(token, json -> {
+            if (json == null) {
+                setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                return;
+            }
+            int gems = json.optInt("gems", 0);
+            JSONObject gemsStatus = json.optJSONObject("gemsStatus");
+            boolean claimReady = gemsStatus != null && gemsStatus.optBoolean("canClaim", false);
+            String nextClaim = gemsStatus != null ? gemsStatus.optString("nextClaimAt", "") : "";
+            canClaim[0] = claimReady;
+            String balanceText = LocaleController.formatString(R.string.SpNetGramGemsBalance, gems);
+            String claimText;
+            if (claimReady) {
+                claimText = LocaleController.getString(R.string.SpNetGramGemsClaimReady);
+            } else if (!TextUtils.isEmpty(nextClaim)) {
+                claimText = LocaleController.formatString(R.string.SpNetGramGemsNext, formatDate(nextClaim));
+            } else {
+                claimText = "";
+            }
+            String combined = TextUtils.isEmpty(claimText) ? balanceText : balanceText + "\n" + claimText;
+            setStatus(status, combined, false);
+            action.setText(LocaleController.getString(claimReady ? R.string.SpNetGramClaimGems : R.string.SpNetGramRefresh));
+        });
+    }
+
+    private void claimGems(TextView status, TextView action, boolean[] canClaim) {
+        if (!ensureSignedIn()) {
+            setStatus(status, LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
+            return;
+        }
+        setStatus(status, LocaleController.getString(R.string.SpNetGramStatusLoading), false);
+        String token = SpNetGramConfig.getBackendToken();
+        SpNetGramApi.claimGems(token, json -> {
+            loadGemsStatus(status, action, canClaim);
+        });
     }
 }

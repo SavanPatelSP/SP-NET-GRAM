@@ -13,7 +13,6 @@ ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavresample.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libavutil.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libswresample.a,
 ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libvpx.a,
-${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libdav1d.a,
 ${CMAKE_HOME_DIRECTORY}/boringssl/lib/${ANDROID_ABI}/libssl.a,
 ${CMAKE_HOME_DIRECTORY}/boringssl/lib/${ANDROID_ABI}/libcrypto.a,
 ${CMAKE_HOME_DIRECTORY}/tde2e/${ANDROID_ABI}/libtde2e.a,
@@ -43,17 +42,14 @@ set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIREC
 add_library(swscale STATIC IMPORTED)
 set_target_properties(swscale PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libswscale.a)
 
+add_library(libvpx STATIC IMPORTED)
+set_target_properties(libvpx PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libvpx.a)
+
 add_library(crypto STATIC IMPORTED)
 set_target_properties(crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/boringssl/lib/${ANDROID_ABI}/libcrypto.a)
 
 add_library(ssl STATIC IMPORTED)
 set_target_properties(ssl PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/boringssl/lib/${ANDROID_ABI}/libssl.a)
-
-add_library(libvpx STATIC IMPORTED)
-set_target_properties(libvpx PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libvpx.a)
-
-add_library(libdav1d STATIC IMPORTED)
-set_target_properties(libdav1d PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ffmpeg/${ANDROID_ABI}/libdav1d.a)
 
 add_library(tde2e STATIC IMPORTED)
 set_target_properties(tde2e PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/tde2e/${ANDROID_ABI}/libtde2e.a)
@@ -228,6 +224,7 @@ add_library(rlottie STATIC
         rlottie/src/vector/freetype/v_ft_math.cpp
         rlottie/src/vector/freetype/v_ft_raster.cpp
         rlottie/src/vector/freetype/v_ft_stroker.cpp
+        rlottie/src/vector/pixman/pixman-asm-stub.c
         rlottie/src/vector/pixman/vregion.cpp
         rlottie/src/vector/stb/stb_image.cpp
         rlottie/src/vector/vbezier.cpp
@@ -264,19 +261,11 @@ target_include_directories(rlottie PUBLIC
         rlottie/src/vector/stb)
 
 if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
-    target_compile_options(rlottie PUBLIC
-            -fno-integrated-as)
     target_compile_definitions(rlottie PUBLIC
             USE_ARM_NEON)
-    target_sources(rlottie PRIVATE
-            rlottie/src/vector/pixman/pixman-arm-neon-asm.S)
 elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
-    target_compile_options(rlottie PUBLIC
-            -fno-integrated-as)
     target_compile_definitions(rlottie PUBLIC
             USE_ARM_NEON __ARM64_NEON__)
-    target_sources(rlottie PRIVATE
-            rlottie/src/vector/pixman/pixman-arma64-neon-asm.S)
 endif()
 
 
@@ -657,7 +646,6 @@ target_link_libraries(${NATIVE_LIB}
         avresample
         swresample
         libvpx
-        libdav1d
         tde2e
         tdutils
         avutil

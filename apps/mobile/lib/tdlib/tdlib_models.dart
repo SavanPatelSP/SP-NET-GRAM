@@ -26,7 +26,6 @@ class TdlibMessage {
     required this.sender,
     required this.text,
     required this.timestamp,
-    required this.isOutgoing,
   });
 
   final int id;
@@ -34,5 +33,4 @@ class TdlibMessage {
   final String sender;
   final String text;
   final DateTime timestamp;
-  final bool isOutgoing;
 }

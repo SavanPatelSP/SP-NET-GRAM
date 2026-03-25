@@ -59,7 +59,3 @@ android {
 flutter {
     source = "../.."
 }
-
-dependencies {
-    implementation("org.drinkless.tdlib:tdlib:1.8.33")
-}

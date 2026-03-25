@@ -1,12 +1,43 @@
 const state = {
   token: localStorage.getItem('spnet_token') || '',
   role: null,
+  baseUrl: localStorage.getItem('spnet_backend_url') || '',
 };
 
 const loginStatus = document.getElementById('login-status');
 const createStatus = document.getElementById('create-status');
 const licensesStatus = document.getElementById('licenses-status');
 const logoutBtn = document.getElementById('logout-btn');
+const backendUrlInput = document.getElementById('backend-url');
+
+function normalizeBaseUrl(url) {
+  if (!url) return '';
+  return url.replace(/\/$/, '');
+}
+
+function resolveBaseUrl() {
+  if (state.baseUrl) return state.baseUrl;
+  if (backendUrlInput && backendUrlInput.value.trim()) {
+    return normalizeBaseUrl(backendUrlInput.value.trim());
+  }
+  return window.location.origin;
+}
+
+if (backendUrlInput) {
+  if (state.baseUrl) {
+    backendUrlInput.value = state.baseUrl;
+  } else {
+    backendUrlInput.value = window.location.origin;
+  }
+  backendUrlInput.addEventListener('change', () => {
+    state.baseUrl = normalizeBaseUrl(backendUrlInput.value.trim());
+    if (state.baseUrl) {
+      localStorage.setItem('spnet_backend_url', state.baseUrl);
+    } else {
+      localStorage.removeItem('spnet_backend_url');
+    }
+  });
+}
 
 function setStatus(el, msg, isError = false) {
   if (!el) return;
@@ -22,7 +53,7 @@ function headers() {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(`${resolveBaseUrl()}${path}`, {
     ...options,
     headers: { ...headers(), ...(options.headers || {}) },
   });

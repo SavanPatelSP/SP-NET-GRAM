@@ -66,8 +66,6 @@ const elements = {
   chatList: document.getElementById("chatList"),
   chatMessages: document.getElementById("chatMessages"),
   threadName: document.getElementById("threadName"),
-  chatInput: document.getElementById("chatInput"),
-  chatSendBtn: document.getElementById("chatSendBtn"),
   assistantThread: document.getElementById("assistantThread"),
   assistantInput: document.getElementById("assistantInput"),
   assistantSend: document.getElementById("assistantSend"),
@@ -152,8 +150,7 @@ function renderMessages() {
     : sampleMessages;
   messages.forEach((msg) => {
     const bubble = document.createElement("div");
-    const outgoing = msg.from === "you" || msg.isOutgoing;
-    bubble.className = `message ${outgoing ? "you" : ""}`;
+    bubble.className = `message ${msg.from === "you" ? "you" : ""}`;
     bubble.textContent = msg.text || msg.message || "";
     elements.chatMessages.appendChild(bubble);
   });
@@ -313,9 +310,8 @@ async function loadTelegramMessages(chatId) {
   try {
     const messages = await state.tgClient.getMessages(chatId);
     const normalized = messages.map((msg) => ({
-      from: msg.isOutgoing ? "you" : "them",
+      from: "them",
       text: msg.text,
-      isOutgoing: msg.isOutgoing,
     }));
     state.tgMessages.set(chatId, normalized);
   } catch (error) {
@@ -333,20 +329,6 @@ async function selectChat(chatId, title) {
   }
   renderChats();
   renderMessages();
-}
-
-async function sendTelegramMessage() {
-  if (!state.tgClient || !state.activeChatId) return;
-  const text = elements.chatInput.value.trim();
-  if (!text) return;
-  try {
-    await state.tgClient.sendMessage(state.activeChatId, text);
-    elements.chatInput.value = "";
-    await loadTelegramMessages(state.activeChatId);
-    renderMessages();
-  } catch (error) {
-    setTelegramStatus(error.message || "Failed to send message", false);
-  }
 }
 
 async function apiFetch(path, options = {}) {
@@ -613,17 +595,6 @@ function bindEvents() {
   }
   if (elements.tgSignInBtn) {
     elements.tgSignInBtn.addEventListener("click", signInTelegram);
-  }
-
-  if (elements.chatSendBtn) {
-    elements.chatSendBtn.addEventListener("click", sendTelegramMessage);
-  }
-  if (elements.chatInput) {
-    elements.chatInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        sendTelegramMessage();
-      }
-    });
   }
 
   document.querySelectorAll(".tool").forEach((tool) => {

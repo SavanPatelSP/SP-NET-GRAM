@@ -39,6 +39,8 @@ DEFAULT_SP_COIN = 2000
 DEFAULT_GEMS = 50
 AIRDROP_BONUS = 500
 AIRDROP_COOLDOWN_HOURS = 24
+GEMS_BONUS = 10
+GEMS_COOLDOWN_HOURS = 24
 IAP_VERIFY = os.getenv("IAP_VERIFY", "0") == "1"
 REQUIRE_LICENSE = os.getenv("REQUIRE_LICENSE", "1") == "1"
 LICENSE_KEY_PREFIX = os.getenv("LICENSE_KEY_PREFIX", "SPG")
@@ -136,6 +138,16 @@ def ensure_schema(conn):
           user_id INTEGER NOT NULL,
           redeemed_at TEXT NOT NULL,
           FOREIGN KEY(license_id) REFERENCES license_keys(id),
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS gems_status (
+          user_id INTEGER PRIMARY KEY,
+          last_claim_at TEXT,
+          updated_at TEXT NOT NULL,
           FOREIGN KEY(user_id) REFERENCES users(id)
         )
         """
@@ -344,6 +356,27 @@ def get_airdrop_status(conn, user_id):
     }
 
 
+def get_gems_status(conn, user_id):
+    row = conn.execute(
+        "SELECT last_claim_at FROM gems_status WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    last_claim = parse_iso(row["last_claim_at"]) if row else None
+    if last_claim:
+        cooldown = datetime.timedelta(hours=GEMS_COOLDOWN_HOURS)
+        next_claim = last_claim + cooldown
+        can_claim = datetime.datetime.utcnow() >= next_claim
+    else:
+        next_claim = None
+        can_claim = True
+    return {
+        "lastClaimAt": last_claim.isoformat() + "Z" if last_claim else None,
+        "nextClaimAt": next_claim.isoformat().replace("+00:00", "Z") if next_claim else None,
+        "canClaim": can_claim,
+        "cooldownHours": GEMS_COOLDOWN_HOURS,
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -437,11 +470,13 @@ class Handler(BaseHTTPRequestHandler):
                     (user["id"],),
                 ).fetchall()
                 airdrop = get_airdrop_status(conn, user["id"])
+                gems_status = get_gems_status(conn, user["id"])
             return json_response(self, 200, {
                 "spCoin": wallet["sp_coin"],
                 "gems": wallet["gems"],
                 "history": [dict(row) for row in tx],
                 "airdrop": airdrop,
+                "gemsStatus": gems_status,
             })
 
         if parsed.path == "/api/wallet/airdrop/status":
@@ -452,6 +487,16 @@ class Handler(BaseHTTPRequestHandler):
                 if not enforce_access(self, conn, user):
                     return
                 status = get_airdrop_status(conn, user["id"])
+            return json_response(self, 200, status)
+
+        if parsed.path == "/api/wallet/gems/status":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
+                status = get_gems_status(conn, user["id"])
             return json_response(self, 200, status)
 
         if parsed.path == "/api/premium/plans":
@@ -537,6 +582,10 @@ class Handler(BaseHTTPRequestHandler):
                         "INSERT INTO airdrop_status (user_id, last_claim_at, updated_at) VALUES (?, ?, ?)",
                         (user_id, None, now_iso()),
                     )
+                    conn.execute(
+                        "INSERT INTO gems_status (user_id, last_claim_at, updated_at) VALUES (?, ?, ?)",
+                        (user_id, None, now_iso()),
+                    )
                     conn.commit()
                 except sqlite3.IntegrityError:
                     return json_response(self, 409, {"error": "User already exists"})
@@ -607,6 +656,36 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 conn.commit()
             return json_response(self, 200, {"spCoin": new_balance, "claimed": AIRDROP_BONUS})
+
+        if parsed.path == "/api/wallet/gems/claim":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            with db_connect() as conn:
+                if not enforce_access(self, conn, user):
+                    return
+                status = get_gems_status(conn, user["id"])
+                if not status["canClaim"]:
+                    return json_response(self, 400, {"error": "Gems cooldown", "nextClaimAt": status["nextClaimAt"]})
+                wallet = conn.execute(
+                    "SELECT gems FROM wallet WHERE user_id = ?",
+                    (user["id"],),
+                ).fetchone()
+                new_balance = wallet["gems"] + GEMS_BONUS
+                conn.execute(
+                    "UPDATE wallet SET gems = ?, updated_at = ? WHERE user_id = ?",
+                    (new_balance, now_iso(), user["id"]),
+                )
+                conn.execute(
+                    "INSERT INTO wallet_tx (user_id, amount, currency, description, created_at) VALUES (?, ?, ?, ?, ?)",
+                    (user["id"], GEMS_BONUS, "GEM", "Gems claim", now_iso()),
+                )
+                conn.execute(
+                    "INSERT OR REPLACE INTO gems_status (user_id, last_claim_at, updated_at) VALUES (?, ?, ?)",
+                    (user["id"], now_iso(), now_iso()),
+                )
+                conn.commit()
+            return json_response(self, 200, {"gems": new_balance, "claimed": GEMS_BONUS})
 
         if parsed.path == "/api/premium/subscribe":
             user = get_user_by_token(get_token(self))

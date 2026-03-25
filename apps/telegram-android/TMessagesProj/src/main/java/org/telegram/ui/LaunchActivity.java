@@ -6603,6 +6603,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         for (PasscodeView overlay : overlayPasscodeViews) {
             overlay.onPause();
         }
+        SpNetGramAccessController.stopPeriodicChecks();
         boolean doNotPause = false;
         if (ApplicationLoader.applicationLoaderInstance != null) {
             doNotPause = ApplicationLoader.applicationLoaderInstance.onPause();
@@ -6832,6 +6833,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             for (PasscodeView overlay : overlayPasscodeViews) {
                 overlay.onResume();
             }
+        }
+        if (passcodeDialog == null || passcodeDialog.passcodeView.getVisibility() != View.VISIBLE) {
+            SpNetGramAccessController.ensureAccess(this);
+            SpNetGramAccessController.startPeriodicChecks();
         }
         ConnectionsManager.getInstance(currentAccount).setAppPaused(false, false);
         updateCurrentConnectionState(currentAccount);

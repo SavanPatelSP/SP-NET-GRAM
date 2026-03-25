@@ -3,8 +3,6 @@ import 'api_client.dart';
 import 'iap_service.dart';
 import 'models.dart';
 import 'app_config.dart';
-import 'telegram/telegram_controller.dart';
-import 'tdlib/tdlib_models.dart';
 
 final ApiClient apiClient = ApiClient(
   baseUrlProvider: () => AppConfig.backendUrl,
@@ -52,38 +50,21 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
-  late final TelegramController _telegramController;
 
-  @override
-  void initState() {
-    super.initState();
-    _telegramController = TelegramController();
-    _telegramController.initialize();
-  }
-
-  @override
-  void dispose() {
-    _telegramController.dispose();
-    super.dispose();
-  }
-
-  List<Widget> _buildPages() {
-    return [
-      ChatsPage(controller: _telegramController),
-      const AssistantPage(),
-      const SpgIdPage(),
-      const PremiumPage(),
-      const WalletPage(),
-      const SettingsPage(),
-    ];
-  }
+  final _pages = const [
+    ChatsPage(),
+    AssistantPage(),
+    SpgIdPage(),
+    PremiumPage(),
+    WalletPage(),
+    SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 900;
-        final pages = _buildPages();
         if (isWide) {
           return Scaffold(
             body: Row(
@@ -121,13 +102,13 @@ class _HomeShellState extends State<HomeShell> {
                   ],
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: pages[_index]),
+                Expanded(child: _pages[_index]),
               ],
             ),
           );
         }
         return Scaffold(
-          body: pages[_index],
+          body: _pages[_index],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _index,
             onTap: (value) => setState(() => _index = value),
@@ -147,348 +128,33 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-class ChatsPage extends StatefulWidget {
-  const ChatsPage({super.key, required this.controller});
-
-  final TelegramController controller;
-
-  @override
-  State<ChatsPage> createState() => _ChatsPageState();
-}
-
-class _ChatsPageState extends State<ChatsPage> {
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _codeController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _messageController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onUpdate);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onUpdate);
-    _phoneController.dispose();
-    _codeController.dispose();
-    _passwordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _onUpdate() => setState(() {});
+class ChatsPage extends StatelessWidget {
+  const ChatsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final auth = widget.controller.authState;
-    if (auth.status != 'READY') {
-      return _ScaffoldPage(
-        title: 'Chats',
-        subtitle: 'Telegram login required',
-        child: _buildAuthPanel(auth),
-      );
-    }
     return _ScaffoldPage(
       title: 'Chats',
-      subtitle: 'Telegram connected',
-      child: _buildChatPanel(),
-    );
-  }
-
-  Widget _buildAuthPanel(auth) {
-    final status = auth.status;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Status: $status', style: const TextStyle(fontWeight: FontWeight.w600)),
-              if (auth.message != null) ...[
-                const SizedBox(height: 6),
-                Text(auth.message!, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (status == 'WAIT_PHONE') ...[
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Phone Login', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: '+91…'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => widget.controller.sendPhoneNumber(_phoneController.text.trim()),
-                  child: const Text('Send Code'),
-                ),
-              ],
-            ),
-          ),
+      subtitle: 'Nova Squad · 8 members',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle('Pinned'),
+          const SizedBox(height: 8),
+          _ChatTile('Nova Squad', 'We ship the beta tonight.'),
+          _ChatTile('SP NET Ops', 'Airdrop schedule updated.'),
+          const SizedBox(height: 16),
+          _SectionTitle('All Chats'),
+          _ChatTile('Design Crew', 'Assistant card styles ready.'),
+          _ChatTile('Launch Room', 'Countdown: T-5 days.'),
         ],
-        if (status == 'WAIT_CODE') ...[
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Verify Code', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _codeController,
-                  decoration: const InputDecoration(labelText: 'Code'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => widget.controller.sendOtp(_codeController.text.trim()),
-                  child: const Text('Verify'),
-                ),
-              ],
-            ),
-          ),
-        ],
-        if (status == 'WAIT_PASSWORD') ...[
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Two-factor Password', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => widget.controller.sendPassword(_passwordController.text.trim()),
-                  child: const Text('Submit'),
-                ),
-              ],
-            ),
-          ),
-        ],
-        if (status == 'WAIT_DEVICE_CONFIRMATION') ...[
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Confirm on another device', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Text(auth.message ?? 'Open Telegram and confirm this login.'),
-              ],
-            ),
-          ),
-        ],
-        if (status == 'WAIT_REGISTRATION') ...[
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Create Telegram account', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(labelText: 'First name'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _lastNameController,
-                  decoration: const InputDecoration(labelText: 'Last name'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => widget.controller.registerUser(
-                    _firstNameController.text.trim(),
-                    _lastNameController.text.trim(),
-                  ),
-                  child: const Text('Register'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildChatPanel() {
-    final chats = widget.controller.chats;
-    final activeId = widget.controller.activeChatId;
-    final messages = activeId != null ? (widget.controller.messages[activeId] ?? []) : const [];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 900;
-        final chatList = _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Chats', style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              if (chats.isEmpty)
-                const Text('No chats yet.'),
-              ...chats.map((chat) {
-                final selected = chat.id == activeId;
-                return ListTile(
-                  selected: selected,
-                  title: Text(chat.title),
-                  subtitle: Text(chat.lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  onTap: () async {
-                    widget.controller.setActiveChat(chat.id);
-                    await widget.controller.fetchMessages(chat.id);
-                  },
-                );
-              }).toList(),
-            ],
-          ),
-        );
-
-        final messagePanel = _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                chats.firstWhere(
-                  (c) => c.id == activeId,
-                  orElse: () => const TdlibChatSummary(id: 0, title: 'Select a chat', lastMessage: '', unreadCount: 0),
-                ).title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 320,
-                child: ListView.builder(
-                  reverse: true,
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    final align = msg.isOutgoing ? Alignment.centerRight : Alignment.centerLeft;
-                    final color = msg.isOutgoing ? const Color(0xFF1B8E7A) : const Color(0xFF1C2942);
-                    return Align(
-                      alignment: align,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(msg.text),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(labelText: 'Message'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: activeId == null
-                        ? null
-                        : () async {
-                            final text = _messageController.text.trim();
-                            if (text.isEmpty) return;
-                            await widget.controller.sendMessage(activeId, text);
-                            _messageController.clear();
-                            await widget.controller.fetchMessages(activeId);
-                          },
-                    child: const Text('Send'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-
-        if (isWide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: chatList),
-              const SizedBox(width: 12),
-              Expanded(child: messagePanel),
-            ],
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            chatList,
-            const SizedBox(height: 12),
-            messagePanel,
-          ],
-        );
-      },
+      ),
     );
   }
 }
 
-class AssistantPage extends StatefulWidget {
+class AssistantPage extends StatelessWidget {
   const AssistantPage({super.key});
-
-  @override
-  State<AssistantPage> createState() => _AssistantPageState();
-}
-
-class _AssistantPageState extends State<AssistantPage> {
-  final TextEditingController _controller = TextEditingController();
-  final List<Map<String, String>> _thread = [
-    {'role': 'assistant', 'content': 'Hi! Want a summary of your last chat?'},
-  ];
-  bool _busy = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send(String intent) async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _busy = true;
-      _thread.add({'role': 'user', 'content': text});
-      _controller.clear();
-    });
-    try {
-      final reply = await apiClient.assistantChat(
-        messages: _thread,
-        intent: intent,
-      );
-      setState(() {
-        _thread.add({'role': 'assistant', 'content': reply['reply']?.toString() ?? '—'});
-      });
-    } catch (error) {
-      setState(() {
-        _thread.add({'role': 'assistant', 'content': 'Assistant error: $error'});
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -501,58 +167,22 @@ class _AssistantPageState extends State<AssistantPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              _Chip('Summarize', onTap: () => _send('summarize')),
-              _Chip('Translate', onTap: () => _send('translate')),
-              _Chip('Smart Replies', onTap: () => _send('smart_reply')),
-              _Chip('Action Items', onTap: () => _send('general')),
+            children: const [
+              _Chip('Summarize'),
+              _Chip('Translate'),
+              _Chip('Rewrite'),
+              _Chip('Smart Replies'),
+              _Chip('Action Items'),
             ],
           ),
           const SizedBox(height: 16),
           _Card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Assistant Chat', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 240,
-                  child: ListView.builder(
-                    itemCount: _thread.length,
-                    itemBuilder: (context, index) {
-                      final item = _thread[index];
-                      final isUser = item['role'] == 'user';
-                      return Align(
-                        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isUser ? const Color(0xFF1B8E7A) : const Color(0xFF1C2942),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(item['content'] ?? ''),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: const InputDecoration(labelText: 'Ask the assistant'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: _busy ? null : () => _send('general'),
-                      child: Text(_busy ? '...' : 'Send'),
-                    ),
-                  ],
-                ),
+              children: const [
+                Text('Assistant Chat', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                Text('Ask about any thread or request a summary.'),
               ],
             ),
           ),
@@ -562,239 +192,95 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 }
 
-class SpgIdPage extends StatefulWidget {
+class SpgIdPage extends StatelessWidget {
   const SpgIdPage({super.key});
 
   @override
-  State<SpgIdPage> createState() => _SpgIdPageState();
-}
-
-class _SpgIdPageState extends State<SpgIdPage> {
-  Map<String, dynamic>? _profile;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    try {
-      final data = await apiClient.getProfile();
-      setState(() {
-        _profile = data;
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _mint() async {
-    setState(() => _loading = true);
-    try {
-      final data = await apiClient.mintSpgId();
-      setState(() {
-        _profile = {...?_profile, 'spgId': data['spgId']};
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final spgId = _profile?['spgId']?.toString() ?? 'SPG-UNMINTED';
     return _ScaffoldPage(
       title: 'SP NET GRAM ID',
       subtitle: 'Your portable identity',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(spgId, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Text(_loading ? 'Loading…' : 'Handle: @spnetgram'),
-                const Text('Badges: Alpha · Builder'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: _loading ? null : _mint,
-            child: const Text('Mint New ID'),
-          ),
-        ],
+      child: _Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('SPG-4F9A-88X2', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+            SizedBox(height: 8),
+            Text('Handle: @spnetgram'),
+            Text('Badges: Alpha · Builder'),
+          ],
+        ),
       ),
     );
   }
 }
 
-class PremiumPage extends StatefulWidget {
+class PremiumPage extends StatelessWidget {
   const PremiumPage({super.key});
 
   @override
-  State<PremiumPage> createState() => _PremiumPageState();
-}
-
-class _PremiumPageState extends State<PremiumPage> {
-  List<PremiumPlan> _plans = const [];
-  String _currentPlan = 'free';
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final data = await apiClient.getPremiumPlans();
-      final status = AppConfig.sessionToken.isEmpty
-          ? {'planId': 'free'}
-          : await apiClient.getPremiumStatus();
-      final platform = Theme.of(context).platform;
-      final key = platform == TargetPlatform.iOS ? 'ios' : 'android';
-      final plans = (data['plans'] as List<dynamic>? ?? []).map((plan) {
-        final map = plan as Map<String, dynamic>;
-        final productId = (map['productIds'] as Map?)?[key]?.toString();
-        return PremiumPlan(
-          id: map['id']?.toString() ?? '',
-          name: map['name']?.toString() ?? '',
-          subtitle: (map['perks'] as List?)?.join(' · ') ?? '',
-          price: map['price'] is num ? '\$${map['price']}' : map['price']?.toString() ?? '',
-          productId: productId,
-        );
-      }).toList();
-      setState(() {
-        _plans = plans;
-        _currentPlan = status['planId']?.toString() ?? 'free';
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _activate(PremiumPlan plan) async {
-    if (plan.productId != null) {
-      await iapService.startPurchase(context, plan);
-      return;
-    }
-    final platform = Theme.of(context).platform == TargetPlatform.iOS ? 'ios' : 'android';
-    await apiClient.activatePlan(planId: plan.id, platform: platform);
-    await _load();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final plans = _plans.isEmpty
-        ? const [
-            PremiumPlan(
-              id: 'free',
-              name: 'Free',
-              subtitle: 'Basic chat + limited assistant',
-              price: 'Free',
-              productId: null,
-            ),
-          ]
-        : _plans;
+    final plans = [
+      PremiumPlan(
+        id: 'free',
+        name: 'Free',
+        subtitle: 'Basic chat + limited assistant',
+        price: 'Free',
+        productId: null,
+      ),
+      PremiumPlan(
+        id: 'plus',
+        name: 'Plus',
+        subtitle: 'Unlimited assistant + SPG badge',
+        price: '\$4.99 / mo',
+        productId: 'spnetgram_plus_android',
+      ),
+      PremiumPlan(
+        id: 'pro',
+        name: 'Pro',
+        subtitle: 'Priority features + airdrop boosts',
+        price: '\$9.99 / mo',
+        productId: 'spnetgram_pro_android',
+      ),
+    ];
 
     return _ScaffoldPage(
       title: 'Premium Plans',
       subtitle: 'Unlock assistant boosts + perks',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Current: ${_currentPlan.toUpperCase()}'),
-          const SizedBox(height: 12),
-          if (_loading) const Text('Loading…'),
-          ...plans.map((plan) => _PlanCard(
-                plan: plan,
-                onSelect: () => _activate(plan),
-              )),
-        ],
+        children: plans
+            .map((plan) => _PlanCard(
+                  plan: plan,
+                  onSelect: () => iapService.startPurchase(context, plan),
+                ))
+            .toList(),
       ),
     );
   }
 }
 
-class WalletPage extends StatefulWidget {
+class WalletPage extends StatelessWidget {
   const WalletPage({super.key});
 
   @override
-  State<WalletPage> createState() => _WalletPageState();
-}
-
-class _WalletPageState extends State<WalletPage> {
-  Map<String, dynamic>? _wallet;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWallet();
-  }
-
-  Future<void> _loadWallet() async {
-    try {
-      final data = await apiClient.getWallet();
-      setState(() {
-        _wallet = data;
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _claimAirdrop() async {
-    setState(() => _loading = true);
-    try {
-      await apiClient.claimAirdrop();
-      await _loadWallet();
-    } catch (_) {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final spCoin = _wallet?['spCoin']?.toString() ?? '—';
-    final gems = _wallet?['gems']?.toString() ?? '—';
-    final airdrop = _wallet?['airdrop'] as Map<String, dynamic>?;
-    final canClaim = airdrop?['canClaim'] == true;
-    final nextClaim = airdrop?['nextClaimAt']?.toString() ?? '—';
-
     return _ScaffoldPage(
       title: 'Wallet',
       subtitle: 'SP Coin + Gems',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Card(child: Text('SP Coin Balance: $spCoin SP')),
-          const SizedBox(height: 12),
+        children: const [
           _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(canClaim ? 'Airdrop Available' : 'Next Airdrop: $nextClaim'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: _loading || !canClaim ? null : _claimAirdrop,
-                  child: Text(_loading ? '...' : 'Claim'),
-                ),
-              ],
-            ),
+            child: Text('SP Coin Balance: 12,480 SP'),
           ),
-          const SizedBox(height: 12),
-          _Card(child: Text('Gems Balance: $gems Gems')),
+          SizedBox(height: 12),
+          _Card(
+            child: Text('Next Airdrop: in 04:12:33'),
+          ),
+          SizedBox(height: 12),
+          _Card(
+            child: Text('Gems Balance: 580 Gems'),
+          ),
         ],
       ),
     );
@@ -811,34 +297,18 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   late final TextEditingController _backendController;
   late final TextEditingController _tokenController;
-  late final TextEditingController _loginEmailController;
-  late final TextEditingController _loginPasswordController;
-  late final TextEditingController _registerNameController;
-  late final TextEditingController _registerEmailController;
-  late final TextEditingController _registerPasswordController;
-  String _status = 'Not connected';
 
   @override
   void initState() {
     super.initState();
     _backendController = TextEditingController(text: AppConfig.backendUrl);
     _tokenController = TextEditingController(text: AppConfig.sessionToken);
-    _loginEmailController = TextEditingController();
-    _loginPasswordController = TextEditingController();
-    _registerNameController = TextEditingController();
-    _registerEmailController = TextEditingController();
-    _registerPasswordController = TextEditingController();
   }
 
   @override
   void dispose() {
     _backendController.dispose();
     _tokenController.dispose();
-    _loginEmailController.dispose();
-    _loginPasswordController.dispose();
-    _registerNameController.dispose();
-    _registerEmailController.dispose();
-    _registerPasswordController.dispose();
     super.dispose();
   }
 
@@ -848,43 +318,6 @@ class _SettingsPageState extends State<SettingsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Settings saved.')),
     );
-  }
-
-  Future<void> _login() async {
-    final email = _loginEmailController.text.trim();
-    final password = _loginPasswordController.text.trim();
-    if (email.isEmpty || password.isEmpty) return;
-    try {
-      final data = await apiClient.login(email: email, password: password);
-      setState(() {
-        AppConfig.sessionToken = data['token']?.toString() ?? '';
-        _tokenController.text = AppConfig.sessionToken;
-        _status = 'Connected';
-      });
-    } catch (_) {
-      setState(() => _status = 'Login failed');
-    }
-  }
-
-  Future<void> _register() async {
-    final name = _registerNameController.text.trim();
-    final email = _registerEmailController.text.trim();
-    final password = _registerPasswordController.text.trim();
-    if (name.isEmpty || email.isEmpty || password.isEmpty) return;
-    try {
-      await apiClient.register(displayName: name, email: email, password: password);
-      setState(() => _status = 'Registered. You can login.');
-    } catch (_) {
-      setState(() => _status = 'Register failed');
-    }
-  }
-
-  void _logout() {
-    setState(() {
-      AppConfig.sessionToken = '';
-      _tokenController.text = '';
-      _status = 'Disconnected';
-    });
   }
 
   @override
@@ -900,8 +333,6 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Backend & Session', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                Text(_status),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _backendController,
@@ -914,57 +345,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(onPressed: _save, child: const Text('Save')),
-                const SizedBox(height: 8),
-                OutlinedButton(onPressed: _logout, child: const Text('Logout')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Login', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _loginEmailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _loginPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(onPressed: _login, child: const Text('Login')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Register', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _registerNameController,
-                  decoration: const InputDecoration(labelText: 'Display name'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _registerEmailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _registerPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(onPressed: _register, child: const Text('Register')),
               ],
             ),
           ),
@@ -1077,15 +457,13 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip(this.label, {this.onTap});
+  const _Chip(this.label);
 
   final String label;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      onPressed: onTap,
+    return Chip(
       label: Text(label),
       backgroundColor: const Color(0xFF14263B),
       labelStyle: const TextStyle(color: Color(0xFFCAD6F0)),

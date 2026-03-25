@@ -8,6 +8,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -35,7 +36,7 @@ public class SpNetGramInfoActivity extends BaseFragment {
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(getString(arguments != null ? arguments.getInt("titleRes", R.string.SpNetGramSettings) : R.string.SpNetGramSettings));
+        actionBar.setTitle(LocaleController.getString(arguments != null ? arguments.getInt("titleRes", R.string.SpNetGramSettings) : R.string.SpNetGramSettings));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -56,7 +57,7 @@ public class SpNetGramInfoActivity extends BaseFragment {
         textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         textView.setLineSpacing(AndroidUtilities.dp(4), 1.0f);
         textView.setPadding(AndroidUtilities.dp(20), AndroidUtilities.dp(16), AndroidUtilities.dp(20), AndroidUtilities.dp(16));
-        textView.setText(getString(arguments != null ? arguments.getInt("bodyRes", R.string.SpNetGramInfoDefault) : R.string.SpNetGramInfoDefault));
+        textView.setText(LocaleController.getString(arguments != null ? arguments.getInt("bodyRes", R.string.SpNetGramInfoDefault) : R.string.SpNetGramInfoDefault));
 
         scrollView.addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         frameLayout.addView(scrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));

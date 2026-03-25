@@ -108,6 +108,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -183,6 +184,7 @@ public class MessageObject {
     public CharSequence messageText;
     public CharSequence messageTextShort;
     public CharSequence messageTextForReply;
+    public boolean spNetGramSpam;
     public CharSequence linkDescription;
     public CharSequence caption;
     public CharSequence youtubeDescription;
@@ -1763,6 +1765,11 @@ public class MessageObject {
 
     private static final int LINES_PER_BLOCK = 10;
     private static final int LINES_PER_BLOCK_WITH_EMOJI = 5;
+    private static final String[] SPNETGRAM_SPAM_KEYWORDS = new String[] {
+        "airdrop", "crypto", "bitcoin", "investment", "invest", "profit",
+        "forex", "wallet", "giveaway", "free money", "double", "bonus",
+        "click", "limited offer", "earn", "claim now", "bit.ly", "t.me/"
+    };
 
     public int lastLineWidth;
     public int textWidth;
@@ -5828,9 +5835,39 @@ public class MessageObject {
             messageText = "";
         }
 
+        applySpNetGramSpamFilter();
+
         isEmbedVideoCached = null;
         cachedStartsTimestamp = null;
         cachedSavedTimestamp = null;
+    }
+
+    private void applySpNetGramSpamFilter() {
+        spNetGramSpam = false;
+        if (!SpNetGramConfig.isSpamFilterEnabled()) {
+            return;
+        }
+        if (messageOwner == null || messageOwner.out || messageOwner instanceof TLRPC.TL_messageService) {
+            return;
+        }
+        if (isSponsored()) {
+            return;
+        }
+        if (messageText == null) {
+            return;
+        }
+        String lower = messageText.toString().toLowerCase(Locale.ROOT);
+        if (lower.isEmpty()) {
+            return;
+        }
+        for (String keyword : SPNETGRAM_SPAM_KEYWORDS) {
+            if (lower.contains(keyword)) {
+                spNetGramSpam = true;
+                messageText = LocaleController.getString(R.string.SpNetGramSpamFiltered);
+                messageTextShort = messageText;
+                break;
+            }
+        }
     }
 
     private CharSequence formatTaskTitle(TLRPC.TodoItem task) {

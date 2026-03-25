@@ -52,6 +52,13 @@ CREATE TABLE IF NOT EXISTS airdrop_status (
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS gems_status (
+  user_id INTEGER PRIMARY KEY,
+  last_claim_at TEXT,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS license_keys (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   license_key TEXT UNIQUE NOT NULL,
