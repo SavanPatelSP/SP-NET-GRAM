@@ -439,9 +439,9 @@
     <string name="LanguageUnknownCustomAlert">Sfortunatamente, questa lingua personalizzata (**%1$s**) non contiene dati per SP NET GRAM Android.</string>
     <string name="AskAQuestionInfo">Per favore ricorda che il supporto di Telegram è gestito da volontari. Proviamo a rispondere quanto prima, ma potrebbe volerci del tempo.\n\nDai un\'occhiata alle <![CDATA[<a href=\"https://telegram.org/faq/it#domande-generali\">FAQ di Telegram</a>]]>: contengono risposte a quasi tutte le domande e suggerimenti importanti per <![CDATA[<a href=\"https://telegram.org/faq/it#risoluzione-dei-problemi\">risolvere i problemi</a>]]>.</string>
     <string name="AskButton">Chiedi ai volontari</string>
-    <string name="SP NET GRAMFAQ">FAQ SP NET GRAM</string>
-    <string name="SP NET GRAMFaq">FAQ SP NET GRAM</string>
-    <string name="SP NET GRAMFeatures">Funzioni di SP NET GRAM</string>
+    <string name="TelegramFAQ">FAQ SP NET GRAM</string>
+    <string name="TelegramFaq">FAQ SP NET GRAM</string>
+    <string name="TelegramFeatures">Funzioni di SP NET GRAM</string>
     <string name="TelegramFeaturesUrl">https://t.me/TelegramTipsIT</string>
     <string name="AddAccount">Aggiungi account</string>
     <string name="SelectAccount">Seleziona Account</string>
@@ -588,7 +588,7 @@
     <string name="DirectShareInfo">Mostra le chat recenti nel menu di condivisione</string>
     <string name="Emoji">Emoji</string>
     <string name="LargeEmoji">Emoji grandi</string>
-    <string name="SP NET GRAMVersion">SP NET GRAM per Android %1$s</string>
+    <string name="TelegramVersion">SP NET GRAM per Android %1$s</string>
     <string name="DebugMenu">Menu debug</string>
     <string name="DebugMenuLongPress">Tieni premuto di nuovo per il menu di debug</string>
     <string name="DebugSendLogs">Invia i log</string>

@@ -407,9 +407,9 @@
     <string name="LanguageUnknownCustomAlert">للأسف، لا تحتوي حزمة اللغة المخصصةُ هذه (**%1$s **) على بيانات لتيليجرام للأندرويد.</string>
     <string name="AskAQuestionInfo">الدعم الفني في تيليجرام يقوم به متطوعون يحاولون الرد سريعًا قدر الإمكان، لكن ذلك قد يستغرق بعض الوقت.\n\nيرجى الاطلاع على<![CDATA[<a href=\"https://telegram.org/faq/ar#a\"> الأسئلة الشائعة عن تيليجرام</a>]]> فهي تحوي إجابات لمعظم الأسئلة  <![CDATA[<a href=\"https://telegram.org/faq/ar#j\">وحلولًا للعديد من المشاكل.</a>]]></string>
     <string name="AskButton">اسأل متطوعًا</string>
-    <string name="SP NET GRAMFAQ">الأسئلة الشائعة</string>
-    <string name="SP NET GRAMFaq">الأسئلة الشائعة</string>
-    <string name="SP NET GRAMFeatures">ميزات تيليجرام</string>
+    <string name="TelegramFAQ">الأسئلة الشائعة</string>
+    <string name="TelegramFaq">الأسئلة الشائعة</string>
+    <string name="TelegramFeatures">ميزات تيليجرام</string>
     <string name="TelegramFeaturesUrl">https://t.me/TelegramTipsAR/128</string>
     <string name="AddAccount">إضافة حساب</string>
     <string name="SelectAccount">اختيار حساب</string>
@@ -556,7 +556,7 @@
     <string name="DirectShareInfo">إظهار آخر المحادثات في قائمة المشاركة</string>
     <string name="Emoji">الرموز التعبيرية</string>
     <string name="LargeEmoji">رموز تعبيرية كبيرة</string>
-    <string name="SP NET GRAMVersion">تيليجرام للأندرويد %1$s</string>
+    <string name="TelegramVersion">تيليجرام للأندرويد %1$s</string>
     <string name="ChangeLanguageLater">يمكنك تغيير لغة التطبيق لاحقًا من الإعدادات.</string>
     <string name="ChooseYourLanguage">اختيار اللغة</string>
     <string name="ChooseYourLanguageOther">أخرى</string>

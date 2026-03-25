@@ -403,9 +403,9 @@
     <string name="LanguageUnknownCustomAlert">Lamentablemente, este pack de idioma personalizado (**%1$s**) no contiene datos para SP NET GRAM Android.</string>
     <string name="AskAQuestionInfo">Ten en cuenta que el soporte de Telegram está en manos de voluntarios. Respondemos lo antes posible, pero puede tomar tiempo.\n\nPuedes mirar las <![CDATA[<a href=\"https://telegram.org/faq/es#preguntas-generales\">preguntas frecuentes de Telegram</a>]]>: tienen <![CDATA[<a href=\"https://telegram.org/faq/es#solucion-de-problemas\">soluciones a problemas</a>]]> y respuestas a muchas preguntas.</string>
     <string name="AskButton">Preguntar</string>
-    <string name="SP NET GRAMFAQ">Preguntas frecuentes</string>
-    <string name="SP NET GRAMFaq">Preguntas frecuentes</string>
-    <string name="SP NET GRAMFeatures">Aprende sobre SP NET GRAM</string>
+    <string name="TelegramFAQ">Preguntas frecuentes</string>
+    <string name="TelegramFaq">Preguntas frecuentes</string>
+    <string name="TelegramFeatures">Aprende sobre SP NET GRAM</string>
     <string name="TelegramFeaturesUrl">https://t.me/TelegramTipsES</string>
     <string name="AddAccount">Añadir cuenta</string>
     <string name="SelectAccount">Elige una cuenta</string>
@@ -552,7 +552,7 @@
     <string name="DirectShareInfo">Chats recientes al compartir en Android</string>
     <string name="Emoji">Emojis</string>
     <string name="LargeEmoji">Emojis grandes</string>
-    <string name="SP NET GRAMVersion">SP NET GRAM para Android %1$s</string>
+    <string name="TelegramVersion">SP NET GRAM para Android %1$s</string>
     <string name="ChangeLanguageLater">Puedes cambiar el idioma más tarde en Ajustes.</string>
     <string name="ChooseYourLanguage">Elige tu idioma</string>
     <string name="ChooseYourLanguageOther">Otro</string>
