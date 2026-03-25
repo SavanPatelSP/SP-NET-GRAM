@@ -1,3 +1,5 @@
+const DEFAULT_BACKEND_URL = 'https://spnet-gram-backend.onrender.com';
+
 const state = {
   token: localStorage.getItem('spnet_token') || '',
   role: null,
@@ -20,14 +22,19 @@ function resolveBaseUrl() {
   if (backendUrlInput && backendUrlInput.value.trim()) {
     return normalizeBaseUrl(backendUrlInput.value.trim());
   }
-  return window.location.origin;
+  const origin = window.location.origin;
+  if (!origin || origin === 'null') {
+    return DEFAULT_BACKEND_URL;
+  }
+  return origin;
 }
 
 if (backendUrlInput) {
   if (state.baseUrl) {
     backendUrlInput.value = state.baseUrl;
   } else {
-    backendUrlInput.value = window.location.origin;
+    const origin = window.location.origin;
+    backendUrlInput.value = origin && origin !== 'null' ? origin : DEFAULT_BACKEND_URL;
   }
   backendUrlInput.addEventListener('change', () => {
     state.baseUrl = normalizeBaseUrl(backendUrlInput.value.trim());
