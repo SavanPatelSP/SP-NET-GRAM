@@ -30,7 +30,7 @@ public final class SpNetGramConfig {
     public static final String KEY_BACKEND_TOKEN = "backend_token";
     public static final String KEY_BACKEND_EMAIL = "backend_email";
 
-    public static final String BACKEND_URL = "https://spnetgram.spnet.in";
+    public static final String BACKEND_URL = "https://spnet-gram-backend.onrender.com";
 
     private static SharedPreferences prefs() {
         return ApplicationLoader.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);

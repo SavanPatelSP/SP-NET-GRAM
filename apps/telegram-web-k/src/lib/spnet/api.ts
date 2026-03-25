@@ -1,4 +1,4 @@
-const DEFAULT_BACKEND_URL = 'https://spnetgram.spnet.in';
+const DEFAULT_BACKEND_URL = 'https://spnet-gram-backend.onrender.com';
 const RAW_BACKEND_URL =
   import.meta.env.VITE_SPNET_BACKEND_URL ||
   (import.meta as any).env?.VITE_BACKEND_URL ||
