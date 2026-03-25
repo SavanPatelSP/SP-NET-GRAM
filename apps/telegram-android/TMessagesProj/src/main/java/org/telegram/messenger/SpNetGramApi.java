@@ -28,9 +28,16 @@ public class SpNetGramApi {
     }
 
     private static String buildUrl(String path) {
-        String base = SpNetGramConfig.BACKEND_URL;
+        String base = SpNetGramConfig.getBackendBase();
+        if (base == null || base.trim().isEmpty()) {
+            base = SpNetGramConfig.BACKEND_URL;
+        }
+        base = base.trim();
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
+        }
+        if (base.endsWith("/api") && path.startsWith("/api/")) {
+            base = base.substring(0, base.length() - 4);
         }
         return base + path;
     }
@@ -80,6 +87,15 @@ public class SpNetGramApi {
             task.setHeader("Authorization", "Bearer " + token);
         }
         task.execute(buildUrl("/api/access/status"));
+    }
+
+    public static void health(Utilities.Callback<JSONObject> callback) {
+        HttpGetTask task = new HttpGetTask(result -> {
+            if (callback != null) {
+                callback.run(parse(result));
+            }
+        });
+        task.execute(buildUrl("/api/health"));
     }
 
     public static void redeemLicense(String token, String licenseKey, Utilities.Callback<JSONObject> callback) {

@@ -30,9 +30,13 @@
     <string name="SpNetGramLicenseGateTitle">SP NET GRAM Access</string>
     <string name="SpNetGramLicenseGateSubtitle">A premium license is required to use SP NET GRAM.</string>
     <string name="SpNetGramLicenseAccountTitle">Account</string>
+    <string name="SpNetGramLicenseBackendTitle">Backend</string>
     <string name="SpNetGramLicenseEmail">Email</string>
     <string name="SpNetGramLicensePassword">Password</string>
     <string name="SpNetGramLicenseDisplayName">Display name (new accounts)</string>
+    <string name="SpNetGramLicenseBackendHint">Backend URL</string>
+    <string name="SpNetGramLicenseBackendTest">Test Backend</string>
+    <string name="SpNetGramLicenseBackendDefault">Use Default Backend</string>
     <string name="SpNetGramLicenseSignIn">Sign In</string>
     <string name="SpNetGramLicenseCreateAccount">Create Account</string>
     <string name="SpNetGramLicenseRedeemTitle">License Key</string>
@@ -46,6 +50,10 @@
     <string name="SpNetGramLicenseLoginRequired">Please sign in to continue.</string>
     <string name="SpNetGramLicenseCheckFailed">Unable to check access.</string>
     <string name="SpNetGramLicenseWakingServer">Waking server… retrying.</string>
+    <string name="SpNetGramLicenseBackendTesting">Testing backend…</string>
+    <string name="SpNetGramLicenseBackendOk">Backend: OK</string>
+    <string name="SpNetGramLicenseBackendFailed">Backend: unavailable.</string>
+    <string name="SpNetGramLicenseBackendDefaultOk">Backend reset to default.</string>
     <string name="SpNetGramLicenseMissingFields">Please fill in all required fields.</string>
     <string name="SpNetGramLicenseMissingKey">Please enter a license key.</string>
     <string name="SpNetGramLicenseSigningIn">Signing in…</string>

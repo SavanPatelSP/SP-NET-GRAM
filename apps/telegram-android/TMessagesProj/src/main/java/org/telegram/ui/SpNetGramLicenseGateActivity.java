@@ -36,6 +36,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     private EditTextBoldCursor passwordInput;
     private EditTextBoldCursor displayNameInput;
     private EditTextBoldCursor licenseInput;
+    private EditTextBoldCursor backendInput;
 
     public SpNetGramLicenseGateActivity(boolean lockMode) {
         super(null);
@@ -118,6 +119,23 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         accountCard.addView(displayNameInput, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
 
         container.addView(accountCard, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+
+        TextView backendTitle = createSectionTitle(context, LocaleController.getString(R.string.SpNetGramLicenseBackendTitle));
+        container.addView(backendTitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 0));
+
+        LinearLayout backendCard = createCard(context);
+        backendInput = createInput(context, LocaleController.getString(R.string.SpNetGramLicenseBackendHint), InputType.TYPE_TEXT_VARIATION_URI);
+        backendInput.setText(SpNetGramConfig.getBackendBase());
+        backendCard.addView(backendInput, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+        container.addView(backendCard, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+
+        TextView testBackendButton = createSecondaryButton(context, LocaleController.getString(R.string.SpNetGramLicenseBackendTest));
+        testBackendButton.setOnClickListener(v -> testBackend());
+        container.addView(testBackendButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+
+        TextView useDefaultButton = createSecondaryButton(context, LocaleController.getString(R.string.SpNetGramLicenseBackendDefault));
+        useDefaultButton.setOnClickListener(v -> useDefaultBackend());
+        container.addView(useDefaultButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
 
         TextView signInButton = createActionButton(context, LocaleController.getString(R.string.SpNetGramLicenseSignIn));
         signInButton.setOnClickListener(v -> signIn());
@@ -239,6 +257,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void signIn(int attempt) {
+        applyBackendOverride();
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -273,6 +292,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void register(int attempt) {
+        applyBackendOverride();
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
         String displayName = displayNameInput.getText().toString().trim();
@@ -319,6 +339,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void redeem() {
+        applyBackendOverride();
         String licenseKey = licenseInput.getText().toString().trim();
         String token = SpNetGramConfig.getBackendToken();
         if (TextUtils.isEmpty(licenseKey)) {
@@ -355,6 +376,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void refreshAccess(int attempt) {
+        applyBackendOverride();
         String token = SpNetGramConfig.getBackendToken();
         if (TextUtils.isEmpty(token)) {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
@@ -396,5 +418,46 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         SpNetGramConfig.clearBackendToken();
         SpNetGramConfig.setBackendEmail("");
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseLoggedOut), false);
+    }
+
+    private void applyBackendOverride() {
+        if (backendInput == null) {
+            return;
+        }
+        String backend = backendInput.getText().toString().trim();
+        if (TextUtils.isEmpty(backend)) {
+            SpNetGramConfig.setBackendBase(SpNetGramConfig.BACKEND_URL);
+            return;
+        }
+        SpNetGramConfig.setBackendBase(backend);
+    }
+
+    private void useDefaultBackend() {
+        SpNetGramConfig.setBackendBase(SpNetGramConfig.BACKEND_URL);
+        if (backendInput != null) {
+            backendInput.setText(SpNetGramConfig.getBackendBase());
+        }
+        updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendDefaultOk), false);
+    }
+
+    private void testBackend() {
+        applyBackendOverride();
+        updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendTesting), false);
+        SpNetGramApi.health(json -> {
+            if (json == null) {
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendFailed), true);
+                return;
+            }
+            if (json.optBoolean("ok", false)) {
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendOk), false);
+            } else {
+                String error = getErrorMessage(json);
+                if (!TextUtils.isEmpty(error)) {
+                    updateStatus(error, true);
+                } else {
+                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendFailed), true);
+                }
+            }
+        });
     }
 }

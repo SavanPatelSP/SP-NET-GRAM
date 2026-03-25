@@ -29,6 +29,7 @@ public final class SpNetGramConfig {
     public static final String KEY_UI_REDESIGN = "ui_redesign";
     public static final String KEY_BACKEND_TOKEN = "backend_token";
     public static final String KEY_BACKEND_EMAIL = "backend_email";
+    public static final String KEY_BACKEND_BASE = "backend_base";
 
     public static final String BACKEND_URL = "https://spnet-gram-backend.onrender.com";
 
@@ -150,6 +151,25 @@ public final class SpNetGramConfig {
 
     public static void setBackendEmail(String email) {
         prefs().edit().putString(KEY_BACKEND_EMAIL, email == null ? "" : email).apply();
+    }
+
+    public static String getBackendBase() {
+        String value = prefs().getString(KEY_BACKEND_BASE, "");
+        if (value == null || value.trim().isEmpty()) {
+            return BACKEND_URL;
+        }
+        return value.trim();
+    }
+
+    public static void setBackendBase(String base) {
+        String value = base == null ? "" : base.trim();
+        if (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        if (value.endsWith("/api")) {
+            value = value.substring(0, value.length() - 4);
+        }
+        prefs().edit().putString(KEY_BACKEND_BASE, value).apply();
     }
 
     public static boolean isDialogHidden(long dialogId) {
