@@ -370,6 +370,11 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                     resetCodeInput.setSelection(token.length());
                     AndroidUtilities.addToClipboard(token);
                     showResetTokenDialog(token);
+                    String pendingPassword = passwordInput.getText().toString().trim();
+                    if (!TextUtils.isEmpty(pendingPassword)) {
+                        performConfirmReset(token, pendingPassword, attempt);
+                        return;
+                    }
                     updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetNext), false);
                 } else {
                     updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetNoCode), true);
@@ -382,8 +387,12 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
             return;
         }
+        performConfirmReset(resetCode, newPassword, attempt);
+    }
+
+    private void performConfirmReset(String token, String newPassword, int attempt) {
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetUpdating), false);
-        SpNetGramApi.confirmPasswordReset(resetCode, newPassword, json -> {
+        SpNetGramApi.confirmPasswordReset(token, newPassword, json -> {
             if (json == null) {
                 retryLater(() -> resetPassword(attempt + 1), attempt);
                 return;
