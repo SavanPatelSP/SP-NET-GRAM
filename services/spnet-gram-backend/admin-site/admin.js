@@ -10,6 +10,7 @@ const loginStatus = document.getElementById('login-status');
 const createStatus = document.getElementById('create-status');
 const licensesStatus = document.getElementById('licenses-status');
 const accountsStatus = document.getElementById('accounts-status');
+const logsStatus = document.getElementById('logs-status');
 const logoutBtn = document.getElementById('logout-btn');
 const backendUrlInput = document.getElementById('backend-url');
 
@@ -51,6 +52,17 @@ function setStatus(el, msg, isError = false) {
   if (!el) return;
   el.textContent = msg;
   el.style.color = isError ? '#f87171' : '#94a3b8';
+}
+
+function normalizeValue(value, fallback = '—') {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+}
+
+function truncate(text, max = 220) {
+  if (!text) return '—';
+  const str = String(text);
+  return str.length > max ? `${str.slice(0, max)}…` : str;
 }
 
 function headers() {
@@ -110,6 +122,7 @@ async function loadMe() {
     }
     await loadLicenses();
     await loadAccounts();
+    await loadLogs();
   } catch (err) {
     setStatus(loginStatus, err.message, true);
   }
@@ -123,6 +136,8 @@ async function logout() {
   document.getElementById('licenses-body').innerHTML = '';
   const accountsBody = document.getElementById('accounts-body');
   if (accountsBody) accountsBody.innerHTML = '';
+  const logsBody = document.getElementById('logs-body');
+  if (logsBody) logsBody.innerHTML = '';
   setStatus(loginStatus, 'Signed out.');
 }
 
@@ -288,11 +303,59 @@ async function loadAccounts() {
   }
 }
 
+async function loadLogs() {
+  if (!['manager', 'admin'].includes(state.role)) {
+    return;
+  }
+  const logType = document.getElementById('logType');
+  const logLevel = document.getElementById('logLevel');
+  const logUserId = document.getElementById('logUserId');
+  const logLimit = document.getElementById('logLimit');
+  const params = new URLSearchParams();
+  if (logType && logType.value.trim()) params.set('type', logType.value.trim());
+  if (logLevel && logLevel.value.trim()) params.set('level', logLevel.value.trim());
+  if (logUserId && logUserId.value.trim()) params.set('userId', logUserId.value.trim());
+  if (logLimit && logLimit.value.trim()) params.set('limit', logLimit.value.trim());
+  const query = params.toString() ? `?${params.toString()}` : '';
+  try {
+    setStatus(logsStatus, 'Loading logs...');
+    const data = await api(`/api/admin/logs${query}`);
+    const tbody = document.getElementById('logs-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    (data.logs || []).forEach((log) => {
+      const tr = document.createElement('tr');
+      const meta = log.metadata
+        ? truncate(typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : log.metadata)
+        : '—';
+      const cells = [
+        normalizeValue(log.event_type),
+        normalizeValue(log.level),
+        truncate(log.message),
+        normalizeValue(log.user_id),
+        meta,
+        normalizeValue(log.created_at),
+      ];
+      cells.forEach((value) => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    setStatus(logsStatus, `Loaded ${(data.logs || []).length} log(s).`);
+  } catch (err) {
+    setStatus(logsStatus, err.message, true);
+  }
+}
+
 if (document.getElementById('login-btn')) {
   document.getElementById('login-btn').addEventListener('click', login);
   logoutBtn.addEventListener('click', logout);
   document.getElementById('create-btn').addEventListener('click', createLicenses);
   document.getElementById('refresh-btn').addEventListener('click', loadLicenses);
+  const logsRefresh = document.getElementById('logs-refresh-btn');
+  if (logsRefresh) logsRefresh.addEventListener('click', loadLogs);
 }
 
 loadMe();

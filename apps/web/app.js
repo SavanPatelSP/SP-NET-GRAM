@@ -59,6 +59,54 @@ const state = {
   activeChatId: null,
 };
 
+function logClientEvent(eventType, message, metadata = {}, level = "info") {
+  if (!state.backendUrl) return;
+  const headers = { "Content-Type": "application/json" };
+  if (state.token) {
+    headers.Authorization = `Bearer ${state.token}`;
+  }
+  const payload = {
+    type: eventType,
+    level,
+    message,
+    metadata: {
+      app: "web",
+      path: window.location.pathname,
+      ...metadata,
+    },
+  };
+  fetch(`${state.backendUrl}/api/logs/ingest`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+window.addEventListener("error", (event) => {
+  logClientEvent(
+    "client.error",
+    event.message || "Client error",
+    {
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      stack: event.error?.stack,
+    },
+    "error"
+  );
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason;
+  logClientEvent(
+    "client.unhandledrejection",
+    reason?.message || String(reason || "Unhandled rejection"),
+    { stack: reason?.stack },
+    "error"
+  );
+});
+
 const navItems = document.querySelectorAll(".nav-item");
 const views = document.querySelectorAll(".view");
 
@@ -102,6 +150,9 @@ const elements = {
   tgSendCodeBtn: document.getElementById("tgSendCodeBtn"),
   tgCode: document.getElementById("tgCode"),
   tgSignInBtn: document.getElementById("tgSignInBtn"),
+  issueText: document.getElementById("issueText"),
+  issueSend: document.getElementById("issueSend"),
+  issueStatus: document.getElementById("issueStatus"),
 };
 
 navItems.forEach((item) => {
@@ -113,6 +164,7 @@ navItems.forEach((item) => {
     views.forEach((section) => {
       section.classList.toggle("hidden", section.getAttribute("data-view") !== view);
     });
+    logClientEvent("feature.view", `View ${view}`, { view });
   });
 });
 
@@ -125,6 +177,12 @@ function setAuthStatus(text, ok = false) {
     elements.accountStatus.textContent = text;
     elements.accountStatus.style.color = ok ? "var(--accent)" : "var(--muted)";
   }
+}
+
+function setIssueStatus(text, ok = false) {
+  if (!elements.issueStatus) return;
+  elements.issueStatus.textContent = text;
+  elements.issueStatus.style.color = ok ? "var(--accent)" : "var(--muted)";
 }
 
 function renderChats() {
@@ -364,8 +422,10 @@ async function login() {
     await refreshWallet();
     await refreshPremium();
     setAuthStatus("Connected", true);
+    logClientEvent("auth.login.ui", "User signed in (UI)", { method: "web" });
   } catch (error) {
     setAuthStatus(error.message || "Login failed", false);
+    logClientEvent("auth.login.ui_error", error.message || "Login failed", { method: "web" }, "warn");
   }
 }
 
@@ -383,8 +443,10 @@ async function registerUser() {
       body: JSON.stringify({ displayName, email, password }),
     });
     setAuthStatus("Registered. You can login now.", true);
+    logClientEvent("auth.register.ui", "User registered (UI)", { method: "web" });
   } catch (error) {
     setAuthStatus(error.message || "Register failed", false);
+    logClientEvent("auth.register.ui_error", error.message || "Register failed", { method: "web" }, "warn");
   }
 }
 
@@ -411,7 +473,20 @@ async function refreshProfile() {
     setAuthStatus("Connected", true);
   } catch (error) {
     logout();
+    logClientEvent("profile.refresh_error", error.message || "Profile refresh failed", {}, "warn");
   }
+}
+
+function sendIssueReport() {
+  if (!elements.issueText) return;
+  const text = elements.issueText.value.trim();
+  if (!text) {
+    setIssueStatus("Describe the issue before sending.", false);
+    return;
+  }
+  logClientEvent("issue.report", text, { userAgent: navigator.userAgent }, "warn");
+  elements.issueText.value = "";
+  setIssueStatus("Issue report sent. Thanks!", true);
 }
 
 function updateProfileUI() {
@@ -595,6 +670,9 @@ function bindEvents() {
   }
   if (elements.tgSignInBtn) {
     elements.tgSignInBtn.addEventListener("click", signInTelegram);
+  }
+  if (elements.issueSend) {
+    elements.issueSend.addEventListener("click", sendIssueReport);
   }
 
   document.querySelectorAll(".tool").forEach((tool) => {

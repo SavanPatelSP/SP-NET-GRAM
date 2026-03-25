@@ -94,6 +94,19 @@ CREATE TABLE IF NOT EXISTS password_resets (
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS event_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_type TEXT NOT NULL,
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  user_id INTEGER,
+  metadata TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_license_keys_key ON license_keys(license_key);
 CREATE INDEX IF NOT EXISTS idx_license_redemptions_user ON license_redemptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
+CREATE INDEX IF NOT EXISTS idx_event_logs_type ON event_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_event_logs_user ON event_logs(user_id);

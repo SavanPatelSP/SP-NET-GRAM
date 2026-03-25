@@ -46,6 +46,8 @@ REQUIRE_LICENSE = os.getenv("REQUIRE_LICENSE", "1") == "1"
 LICENSE_KEY_PREFIX = os.getenv("LICENSE_KEY_PREFIX", "SPG")
 MAX_LICENSE_BATCH = 500
 RESET_TOKEN_TTL_MIN = int(os.getenv("RESET_TOKEN_TTL_MIN", "30"))
+BOOTSTRAP_EMAIL = (os.getenv("SPNET_BOOTSTRAP_EMAIL", "") or "").strip().lower()
+BOOTSTRAP_ROLE = (os.getenv("SPNET_BOOTSTRAP_ROLE", "manager") or "manager").strip().lower()
 
 ROLE_ORDER = ["user", "manager", "admin"]
 
@@ -169,6 +171,41 @@ def ensure_schema(conn):
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token)")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS event_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_type TEXT NOT NULL,
+          level TEXT NOT NULL,
+          message TEXT NOT NULL,
+          user_id INTEGER,
+          metadata TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_event_logs_type ON event_logs(event_type)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_event_logs_user ON event_logs(user_id)")
+
+
+def ensure_bootstrap_user():
+    if not BOOTSTRAP_EMAIL:
+        return
+    desired_role = BOOTSTRAP_ROLE if BOOTSTRAP_ROLE in ROLE_ORDER else "manager"
+    with db_connect() as conn:
+        row = conn.execute(
+            "SELECT id, role FROM users WHERE email = ? COLLATE NOCASE",
+            (BOOTSTRAP_EMAIL,),
+        ).fetchone()
+        if not row:
+            return
+        if row["role"] != desired_role:
+            conn.execute(
+                "UPDATE users SET role = ? WHERE id = ?",
+                (desired_role, row["id"]),
+            )
+            conn.commit()
 
 
 def hash_password(password: str, salt: str) -> str:
@@ -187,6 +224,19 @@ def verify_password(password: str, encoded: str) -> bool:
     except ValueError:
         return False
     return hash_password(password, salt) == digest
+
+
+def log_event(event_type, message, user_id=None, level="info", metadata=None):
+    try:
+        meta_text = json.dumps(metadata) if metadata is not None else None
+        with db_connect() as conn:
+            conn.execute(
+                "INSERT INTO event_logs (event_type, level, message, user_id, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (event_type, level, message, user_id, meta_text, now_iso()),
+            )
+            conn.commit()
+    except Exception:
+        pass
 
 
 def build_reset_token():
@@ -532,6 +582,50 @@ class Handler(BaseHTTPRequestHandler):
                 access = get_access_state(conn, user["id"])
             return json_response(self, 200, {"premium": status, "access": access})
 
+        if parsed.path == "/api/admin/logs":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            params = parse_qs(parsed.query or "")
+            limit = params.get("limit", ["200"])[0]
+            event_type = params.get("type", [None])[0]
+            level = params.get("level", [None])[0]
+            user_id = params.get("userId", [None])[0]
+            try:
+                limit = max(1, min(int(limit), 500))
+            except ValueError:
+                limit = 200
+            where = []
+            values = []
+            if event_type:
+                where.append("event_type = ?")
+                values.append(event_type)
+            if level:
+                where.append("level = ?")
+                values.append(level)
+            if user_id:
+                where.append("user_id = ?")
+                values.append(user_id)
+            query = "SELECT id, event_type, level, message, user_id, metadata, created_at FROM event_logs"
+            if where:
+                query += " WHERE " + " AND ".join(where)
+            query += " ORDER BY id DESC LIMIT ?"
+            values.append(limit)
+            with db_connect() as conn:
+                rows = conn.execute(query, tuple(values)).fetchall()
+            logs = []
+            for row in rows:
+                item = dict(row)
+                if item.get("metadata"):
+                    try:
+                        item["metadata"] = json.loads(item["metadata"])
+                    except Exception:
+                        pass
+                logs.append(item)
+            return json_response(self, 200, {"logs": logs})
+
         if parsed.path == "/api/admin/licenses":
             user = get_user_by_token(get_token(self))
             if not user:
@@ -611,6 +705,7 @@ class Handler(BaseHTTPRequestHandler):
                         (email,),
                     ).fetchone()
                     if existing:
+                        log_event("auth.register.exists", "User already exists", existing["id"], "warn", {"email": email})
                         return json_response(self, 409, {"error": "User already exists"})
                     conn.execute(
                         "INSERT INTO users (email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?)",
@@ -647,7 +742,9 @@ class Handler(BaseHTTPRequestHandler):
                     access = get_access_state(conn, user_id)
                     conn.commit()
                 except sqlite3.IntegrityError:
+                    log_event("auth.register.exists", "User already exists", None, "warn", {"email": email})
                     return json_response(self, 409, {"error": "User already exists"})
+            log_event("auth.register", "User registered", user_id, "info", {"email": email})
             return json_response(self, 200, {"ok": True, "token": token, "role": user["role"], "access": access})
 
         if parsed.path == "/api/auth/reset/request":
@@ -669,7 +766,9 @@ class Handler(BaseHTTPRequestHandler):
                         (user["id"], token, now_iso(), expires_at),
                     )
                     conn.commit()
+                    log_event("auth.reset.request", "Password reset requested", user["id"], "info", {"email": email})
                     return json_response(self, 200, {"ok": True, "resetToken": token, "expiresAt": expires_at})
+            log_event("auth.reset.request", "Password reset requested (not found)", None, "warn", {"email": email})
             return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/auth/reset/confirm":
@@ -684,11 +783,14 @@ class Handler(BaseHTTPRequestHandler):
                     (token,),
                 ).fetchone()
                 if not row:
+                    log_event("auth.reset.confirm", "Invalid reset token", None, "warn")
                     return json_response(self, 400, {"error": "Invalid reset token"})
                 if row["used_at"]:
+                    log_event("auth.reset.confirm", "Reset token already used", row["user_id"], "warn")
                     return json_response(self, 400, {"error": "Reset token already used"})
                 expires_at = parse_iso(row["expires_at"])
                 if expires_at and expires_at < datetime.datetime.utcnow().replace(tzinfo=None):
+                    log_event("auth.reset.confirm", "Reset token expired", row["user_id"], "warn")
                     return json_response(self, 400, {"error": "Reset token expired"})
                 conn.execute(
                     "UPDATE users SET password_hash = ? WHERE id = ?",
@@ -700,6 +802,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 conn.execute("DELETE FROM sessions WHERE user_id = ?", (row["user_id"],))
                 conn.commit()
+            log_event("auth.reset.confirm", "Password reset", row["user_id"], "info")
             return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/auth/login":
@@ -726,6 +829,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not password_ok and password_trim and password_trim != password_raw:
                         password_ok = verify_password(password_trim, user["password_hash"])
                 if not user or not password_ok:
+                    log_event("auth.login.failed", "Invalid credentials", None, "warn", {"email": email})
                     return json_response(self, 401, {"error": "Invalid credentials"})
                 token = secrets.token_hex(16)
                 conn.execute(
@@ -734,6 +838,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 access = get_access_state(conn, user["id"])
                 conn.commit()
+            log_event("auth.login", "User signed in", user["id"], "info", {"email": email})
             return json_response(self, 200, {"token": token, "role": user["role"], "access": access})
 
         if parsed.path == "/api/profile/spg-id/mint":
@@ -741,6 +846,7 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
             if user["spg_id"]:
+                log_event("spg_id.existing", "SPG ID already minted", user["id"], "info")
                 return json_response(self, 200, {"spgId": user["spg_id"], "status": "existing"})
             spg_id = mint_spg_id()
             with db_connect() as conn:
@@ -748,6 +854,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 conn.execute("UPDATE users SET spg_id = ? WHERE id = ?", (spg_id, user["id"]))
                 conn.commit()
+            log_event("spg_id.mint", "SPG ID minted", user["id"], "info", {"spgId": spg_id})
             return json_response(self, 200, {"spgId": spg_id, "status": "minted"})
 
         if parsed.path == "/api/wallet/airdrop/claim":
@@ -759,6 +866,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 status = get_airdrop_status(conn, user["id"])
                 if not status["canClaim"]:
+                    log_event("wallet.airdrop.cooldown", "Airdrop cooldown", user["id"], "warn", {"nextClaimAt": status["nextClaimAt"]})
                     return json_response(self, 400, {"error": "Airdrop cooldown", "nextClaimAt": status["nextClaimAt"]})
                 wallet = conn.execute(
                     "SELECT sp_coin FROM wallet WHERE user_id = ?",
@@ -778,6 +886,7 @@ class Handler(BaseHTTPRequestHandler):
                     (user["id"], now_iso(), now_iso()),
                 )
                 conn.commit()
+            log_event("wallet.airdrop.claim", "Airdrop claimed", user["id"], "info", {"amount": AIRDROP_BONUS})
             return json_response(self, 200, {"spCoin": new_balance, "claimed": AIRDROP_BONUS})
 
         if parsed.path == "/api/wallet/gems/claim":
@@ -789,6 +898,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 status = get_gems_status(conn, user["id"])
                 if not status["canClaim"]:
+                    log_event("wallet.gems.cooldown", "Gems cooldown", user["id"], "warn", {"nextClaimAt": status["nextClaimAt"]})
                     return json_response(self, 400, {"error": "Gems cooldown", "nextClaimAt": status["nextClaimAt"]})
                 wallet = conn.execute(
                     "SELECT gems FROM wallet WHERE user_id = ?",
@@ -808,6 +918,7 @@ class Handler(BaseHTTPRequestHandler):
                     (user["id"], now_iso(), now_iso()),
                 )
                 conn.commit()
+            log_event("wallet.gems.claim", "Gems claimed", user["id"], "info", {"amount": GEMS_BONUS})
             return json_response(self, 200, {"gems": new_balance, "claimed": GEMS_BONUS})
 
         if parsed.path == "/api/premium/subscribe":
@@ -837,6 +948,7 @@ class Handler(BaseHTTPRequestHandler):
                     (user["id"], plan_id, "active", platform, receipt, expires_at, now_iso()),
                 )
                 conn.commit()
+            log_event("premium.subscribe", "Premium updated", user["id"], "info", {"planId": plan_id, "platform": platform})
             return json_response(self, 200, {
                 "planId": plan_id,
                 "status": "active",
@@ -859,20 +971,25 @@ class Handler(BaseHTTPRequestHandler):
                     (key,),
                 ).fetchone()
                 if not license_row:
+                    log_event("license.redeem.failed", "License not found", user["id"], "warn")
                     return json_response(self, 404, {"error": "License not found"})
                 if license_row["status"] != "active":
+                    log_event("license.redeem.failed", "License not active", user["id"], "warn", {"status": license_row["status"]})
                     return json_response(self, 400, {"error": "License not active", "status": license_row["status"]})
                 if license_row["expires_at"]:
                     exp = parse_iso(license_row["expires_at"])
                     if exp and exp < datetime.datetime.utcnow():
+                        log_event("license.redeem.failed", "License expired", user["id"], "warn")
                         return json_response(self, 400, {"error": "License expired"})
                 if license_row["uses"] >= license_row["max_uses"]:
+                    log_event("license.redeem.failed", "License exhausted", user["id"], "warn")
                     return json_response(self, 400, {"error": "License exhausted"})
                 existing = conn.execute(
                     "SELECT 1 FROM license_redemptions WHERE license_id = ? AND user_id = ?",
                     (license_row["id"], user["id"]),
                 ).fetchone()
                 if existing:
+                    log_event("license.redeem.failed", "License already redeemed", user["id"], "warn")
                     return json_response(self, 400, {"error": "License already redeemed"})
                 now = datetime.datetime.utcnow().replace(microsecond=0)
                 duration_days = license_row["duration_days"]
@@ -896,6 +1013,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 conn.commit()
                 access = get_access_state(conn, user["id"])
+            log_event("license.redeem", "License redeemed", user["id"], "info", {"planId": license_row["plan_id"]})
             return json_response(self, 200, {
                 "ok": True,
                 "planId": license_row["plan_id"],
@@ -960,6 +1078,19 @@ class Handler(BaseHTTPRequestHandler):
                         "createdAt": now,
                     })
                 conn.commit()
+            log_event(
+                "admin.license.create",
+                "Created license keys",
+                user["id"],
+                "info",
+                {
+                    "count": count,
+                    "planId": plan_id,
+                    "maxUses": max_uses,
+                    "durationDays": duration_days,
+                    "expiresAt": expires_at,
+                },
+            )
             return json_response(self, 200, {"created": created})
 
         if parsed.path == "/api/admin/licenses/revoke":
@@ -981,6 +1112,13 @@ class Handler(BaseHTTPRequestHandler):
                     ("revoked", now_iso(), key),
                 )
                 conn.commit()
+            log_event(
+                "admin.license.revoke",
+                "Revoked license",
+                user["id"],
+                "warn",
+                {"licenseKey": key},
+            )
             return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/admin/licenses/update":
@@ -1020,6 +1158,16 @@ class Handler(BaseHTTPRequestHandler):
                     tuple(values),
                 )
                 conn.commit()
+            log_event(
+                "admin.license.update",
+                "Updated license",
+                user["id"],
+                "info",
+                {
+                    "licenseKey": key,
+                    "fields": {k: payload[k] for k in ("status", "maxUses", "expiresAt", "notes") if k in payload},
+                },
+            )
             return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/admin/users/revoke-sessions":
@@ -1035,6 +1183,13 @@ class Handler(BaseHTTPRequestHandler):
             with db_connect() as conn:
                 res = conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
                 conn.commit()
+            log_event(
+                "admin.sessions.revoke",
+                "Revoked sessions",
+                user["id"],
+                "warn",
+                {"targetId": user_id, "revoked": res.rowcount},
+            )
             return json_response(self, 200, {"ok": True, "revoked": res.rowcount})
 
         if parsed.path == "/api/admin/users/reset-password":
@@ -1058,6 +1213,13 @@ class Handler(BaseHTTPRequestHandler):
                     (user_id, token, now_iso(), expires_at),
                 )
                 conn.commit()
+            log_event(
+                "admin.password.reset",
+                "Generated reset token",
+                user["id"],
+                "info",
+                {"targetId": user_id},
+            )
             return json_response(self, 200, {"ok": True, "resetToken": token, "expiresAt": expires_at})
 
         if parsed.path == "/api/admin/users/role":
@@ -1074,6 +1236,21 @@ class Handler(BaseHTTPRequestHandler):
             with db_connect() as conn:
                 conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, target_id))
                 conn.commit()
+            log_event("admin.user.role", "Updated user role", user["id"], "info", {"targetId": target_id, "role": role})
+            return json_response(self, 200, {"ok": True})
+
+        if parsed.path == "/api/logs/ingest":
+            payload = read_json(self)
+            event_type = payload.get("type") or payload.get("eventType") or "client.event"
+            level = payload.get("level") or "info"
+            message = payload.get("message") or ""
+            metadata = payload.get("metadata")
+            if len(message) > 2000:
+                message = message[:2000]
+            token = get_token(self)
+            user = get_user_by_token(token) if token else None
+            user_id = user["id"] if user else None
+            log_event(event_type, message or "client log", user_id, level, metadata)
             return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/assistant/chat":
@@ -1087,6 +1264,7 @@ class Handler(BaseHTTPRequestHandler):
             with db_connect() as conn:
                 if not enforce_access(self, conn, user):
                     return
+            log_event("assistant.chat", "Assistant chat", user["id"], "info", {"intent": intent, "length": len(last_user or "")})
             if intent == "summarize":
                 reply = "(stub) Summary: key goals, decisions, and next steps captured."
                 suggestions = ["Action items", "Smart replies", "Translate"]
@@ -1109,6 +1287,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     init_db()
+    ensure_bootstrap_user()
     port = int(os.getenv("PORT", "8790"))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"SP NET GRAM backend running on http://localhost:{port}")

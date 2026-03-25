@@ -38,6 +38,7 @@
     <string name="SpNetGramLicenseResetPassword">Reset password</string>
     <string name="SpNetGramLicenseResetSending">Sending reset code…</string>
     <string name="SpNetGramLicenseResetSent">Reset code sent.</string>
+    <string name="SpNetGramLicenseResetDialog">Reset code: %1$s\n\nWe copied it to your clipboard.</string>
     <string name="SpNetGramLicenseResetUpdating">Updating password…</string>
     <string name="SpNetGramLicenseResetDone">Password updated. Sign in now.</string>
     <string name="SpNetGramLicenseBackendHint">Backend URL</string>

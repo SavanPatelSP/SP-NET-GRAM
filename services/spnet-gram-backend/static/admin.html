@@ -111,6 +111,48 @@
         </table>
       </div>
     </section>
+
+    <section class="card">
+      <h2>Event Logs</h2>
+      <div class="grid">
+        <label>Type
+          <input id="logType" type="text" placeholder="auth.login" />
+        </label>
+        <label>Level
+          <select id="logLevel">
+            <option value="">All</option>
+            <option value="info">Info</option>
+            <option value="warn">Warn</option>
+            <option value="error">Error</option>
+          </select>
+        </label>
+        <label>User ID
+          <input id="logUserId" type="number" min="1" placeholder="123" />
+        </label>
+        <label>Limit
+          <input id="logLimit" type="number" min="1" max="500" value="200" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="logs-refresh-btn" class="ghost">Refresh Logs</button>
+      </div>
+      <div id="logs-status" class="status muted"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Level</th>
+              <th>Message</th>
+              <th>User</th>
+              <th>Metadata</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
   <script src="/static/admin.js"></script>

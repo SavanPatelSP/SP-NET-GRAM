@@ -443,6 +443,18 @@ body {
   font-family: "Space Grotesk", sans-serif;
 }
 
+.setting-card textarea {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: rgba(10, 16, 26, 0.7);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-family: "Space Grotesk", sans-serif;
+  resize: vertical;
+}
+
 .profile-summary {
   display: grid;
   gap: 6px;

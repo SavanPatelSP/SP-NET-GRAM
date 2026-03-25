@@ -18,6 +18,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SpNetGramApi;
 import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.EditTextBoldCursor;
@@ -366,6 +367,9 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 String token = json.optString("resetToken");
                 if (!TextUtils.isEmpty(token)) {
                     resetCodeInput.setText(token);
+                    resetCodeInput.setSelection(token.length());
+                    AndroidUtilities.addToClipboard(token);
+                    showResetTokenDialog(token);
                 }
                 updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetSent), false);
             });
@@ -388,6 +392,17 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
             }
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetDone), false);
         });
+    }
+
+    private void showResetTokenDialog(String token) {
+        if (getParentActivity() == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(LocaleController.getString(R.string.SpNetGramLicenseResetCode));
+        builder.setMessage(LocaleController.formatString("SpNetGramLicenseResetDialog", R.string.SpNetGramLicenseResetDialog, token));
+        builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
+        showDialog(builder.create());
     }
 
     private void loginAfterRegister(String email, String password, int attempt) {

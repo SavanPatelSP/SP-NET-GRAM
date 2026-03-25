@@ -12,6 +12,10 @@ services:
         value: "1"
       - key: SPNET_DB_PATH
         value: /var/data/spnet_gram.db
+      - key: SPNET_BOOTSTRAP_EMAIL
+        value: savansocialsp@gmail.com
+      - key: SPNET_BOOTSTRAP_ROLE
+        value: manager
     disk:
       name: spnet-gram-data
       mountPath: /var/data
