@@ -9,6 +9,7 @@ const state = {
 const loginStatus = document.getElementById('login-status');
 const createStatus = document.getElementById('create-status');
 const licensesStatus = document.getElementById('licenses-status');
+const accountsStatus = document.getElementById('accounts-status');
 const logoutBtn = document.getElementById('logout-btn');
 const backendUrlInput = document.getElementById('backend-url');
 
@@ -108,6 +109,7 @@ async function loadMe() {
       return;
     }
     await loadLicenses();
+    await loadAccounts();
   } catch (err) {
     setStatus(loginStatus, err.message, true);
   }
@@ -119,6 +121,8 @@ async function logout() {
   localStorage.removeItem('spnet_token');
   logoutBtn.disabled = true;
   document.getElementById('licenses-body').innerHTML = '';
+  const accountsBody = document.getElementById('accounts-body');
+  if (accountsBody) accountsBody.innerHTML = '';
   setStatus(loginStatus, 'Signed out.');
 }
 
@@ -208,6 +212,79 @@ async function loadLicenses() {
     setStatus(licensesStatus, `Loaded ${data.licenses.length} license(s).`);
   } catch (err) {
     setStatus(licensesStatus, err.message, true);
+  }
+}
+
+async function loadAccounts() {
+  if (!['manager', 'admin'].includes(state.role)) {
+    return;
+  }
+  try {
+    setStatus(accountsStatus, 'Loading accounts...');
+    const data = await api('/api/admin/users?limit=200');
+    const tbody = document.getElementById('accounts-body');
+    tbody.innerHTML = '';
+    data.users.forEach((user) => {
+      const access = user.access || {};
+      const premium = access.premium || {};
+      const canUse = access.canUse ? 'Active' : 'Blocked';
+      const expiry = premium.expiresAt || '—';
+      const lastSeen = user.last_seen || '—';
+      const sessions = user.session_count || 0;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${user.email}</td>
+        <td>${user.display_name || '—'}</td>
+        <td>${user.role}</td>
+        <td>${user.created_at}</td>
+        <td>${lastSeen}</td>
+        <td>${sessions}</td>
+        <td>${canUse}</td>
+        <td>${expiry}</td>
+        <td>
+          <button class="action-btn" data-revoke-session="${user.id}">Revoke Sessions</button>
+          <button class="action-btn" data-reset-pass="${user.id}">Reset Password</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('[data-revoke-session]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Revoke all sessions for this user?')) return;
+        try {
+          await api('/api/admin/users/revoke-sessions', {
+            method: 'POST',
+            body: JSON.stringify({ userId: Number(btn.dataset.revokeSession) }),
+          });
+          await loadAccounts();
+        } catch (err) {
+          setStatus(accountsStatus, err.message, true);
+        }
+      });
+    });
+    tbody.querySelectorAll('[data-reset-pass]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Generate a reset token for this user?')) return;
+        try {
+          const data = await api('/api/admin/users/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ userId: Number(btn.dataset.resetPass) }),
+          });
+          if (data?.resetToken) {
+            try {
+              await navigator.clipboard.writeText(data.resetToken);
+            } catch (_) {}
+            prompt('Reset token (copied to clipboard):', data.resetToken);
+          }
+          setStatus(accountsStatus, 'Reset token generated.');
+        } catch (err) {
+          setStatus(accountsStatus, err.message, true);
+        }
+      });
+    });
+    setStatus(accountsStatus, `Loaded ${data.users.length} account(s).`);
+  } catch (err) {
+    setStatus(accountsStatus, err.message, true);
   }
 }
 

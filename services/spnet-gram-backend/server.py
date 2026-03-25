@@ -562,11 +562,32 @@ class Handler(BaseHTTPRequestHandler):
             user = get_user_by_token(get_token(self))
             if not user:
                 return json_response(self, 401, {"error": "Unauthorized"})
-            if not require_role(user, ["admin"]):
+            if not require_role(user, ["manager", "admin"]):
                 return json_response(self, 403, {"error": "Forbidden"})
+            params = parse_qs(parsed.query or "")
+            limit = params.get("limit", ["200"])[0]
+            try:
+                limit = max(1, min(int(limit), 500))
+            except ValueError:
+                limit = 200
             with db_connect() as conn:
-                rows = conn.execute("SELECT id, email, display_name, role, created_at FROM users ORDER BY id DESC LIMIT 200").fetchall()
-            return json_response(self, 200, {"users": [dict(row) for row in rows]})
+                rows = conn.execute(
+                    """
+                    SELECT u.id, u.email, u.display_name, u.role, u.created_at,
+                           (SELECT MAX(last_seen) FROM sessions s WHERE s.user_id = u.id) AS last_seen,
+                           (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id) AS session_count
+                    FROM users u
+                    ORDER BY u.id DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+                users = []
+                for row in rows:
+                    data = dict(row)
+                    data["access"] = get_access_state(conn, row["id"])
+                    users.append(data)
+            return json_response(self, 200, {"users": users})
 
         return json_response(self, 404, {"error": "Not found"})
 
@@ -1000,6 +1021,44 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 conn.commit()
             return json_response(self, 200, {"ok": True})
+
+        if parsed.path == "/api/admin/users/revoke-sessions":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            user_id = payload.get("userId")
+            if not user_id:
+                return json_response(self, 400, {"error": "Missing userId"})
+            with db_connect() as conn:
+                res = conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+                conn.commit()
+            return json_response(self, 200, {"ok": True, "revoked": res.rowcount})
+
+        if parsed.path == "/api/admin/users/reset-password":
+            user = get_user_by_token(get_token(self))
+            if not user:
+                return json_response(self, 401, {"error": "Unauthorized"})
+            if not require_role(user, ["manager", "admin"]):
+                return json_response(self, 403, {"error": "Forbidden"})
+            payload = read_json(self)
+            user_id = payload.get("userId")
+            if not user_id:
+                return json_response(self, 400, {"error": "Missing userId"})
+            with db_connect() as conn:
+                target = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+                if not target:
+                    return json_response(self, 404, {"error": "User not found"})
+                conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
+                token, expires_at = build_reset_token()
+                conn.execute(
+                    "INSERT INTO password_resets (user_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                    (user_id, token, now_iso(), expires_at),
+                )
+                conn.commit()
+            return json_response(self, 200, {"ok": True, "resetToken": token, "expiresAt": expires_at})
 
         if parsed.path == "/api/admin/users/role":
             user = get_user_by_token(get_token(self))
