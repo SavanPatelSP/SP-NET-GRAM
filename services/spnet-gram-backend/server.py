@@ -564,6 +564,12 @@ class Handler(BaseHTTPRequestHandler):
                 display_name = "SP NET GRAM User"
             with db_connect() as conn:
                 try:
+                    existing = conn.execute(
+                        "SELECT id FROM users WHERE email = ? COLLATE NOCASE",
+                        (email,),
+                    ).fetchone()
+                    if existing:
+                        return json_response(self, 409, {"error": "User already exists"})
                     conn.execute(
                         "INSERT INTO users (email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?)",
                         (email, encode_password(password), display_name, now_iso()),
@@ -610,7 +616,7 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 400, {"error": "Missing fields"})
             with db_connect() as conn:
                 user = conn.execute(
-                    "SELECT * FROM users WHERE email = ?",
+                    "SELECT * FROM users WHERE email = ? COLLATE NOCASE",
                     (email,),
                 ).fetchone()
                 if not user or not verify_password(password, user["password_hash"]):
