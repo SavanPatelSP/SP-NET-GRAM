@@ -27,6 +27,9 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     private final boolean lockMode;
     private Runnable onDismiss;
 
+    private static final int MAX_RETRIES = 3;
+    private static final int RETRY_DELAY_MS = 4000;
+
     private TextView statusView;
     private EditTextBoldCursor emailInput;
     private EditTextBoldCursor passwordInput;
@@ -147,7 +150,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         frameLayout.addView(scrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         fragmentView = frameLayout;
-        refreshAccess();
+        refreshAccess(0);
         return fragmentView;
     }
 
@@ -222,6 +225,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void signIn() {
+        signIn(0);
+    }
+
+    private void signIn(int attempt) {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -231,7 +238,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseSigningIn), false);
         SpNetGramApi.login(email, password, json -> {
             if (json == null) {
-                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                retryLater(() -> signIn(attempt + 1), attempt);
                 return;
             }
             String token = json.optString("token");
@@ -239,7 +246,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 SpNetGramConfig.setBackendToken(token);
                 SpNetGramConfig.setBackendEmail(email);
                 updateStatus(LocaleController.getString(R.string.SpNetGramLicenseSignedIn), false);
-                refreshAccess();
+                refreshAccess(0);
             } else {
                 updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
             }
@@ -247,6 +254,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void register() {
+        register(0);
+    }
+
+    private void register(int attempt) {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
         String displayName = displayNameInput.getText().toString().trim();
@@ -257,12 +268,12 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCreating), false);
         SpNetGramApi.register(email, password, displayName, json -> {
             if (json == null || !json.optBoolean("ok", false)) {
-                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                retryLater(() -> register(attempt + 1), attempt);
                 return;
             }
             SpNetGramApi.login(email, password, loginJson -> {
                 if (loginJson == null) {
-                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                    retryLater(() -> register(attempt + 1), attempt);
                     return;
                 }
                 String token = loginJson.optString("token");
@@ -270,7 +281,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                     SpNetGramConfig.setBackendToken(token);
                     SpNetGramConfig.setBackendEmail(email);
                     updateStatus(LocaleController.getString(R.string.SpNetGramLicenseAccountReady), false);
-                    refreshAccess();
+                    refreshAccess(0);
                 } else {
                     updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
                 }
@@ -302,6 +313,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void refreshAccess() {
+        refreshAccess(0);
+    }
+
+    private void refreshAccess(int attempt) {
         String token = SpNetGramConfig.getBackendToken();
         if (TextUtils.isEmpty(token)) {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseLoginRequired), true);
@@ -310,7 +325,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseChecking), false);
         SpNetGramApi.accessStatus(token, json -> {
             if (json == null) {
-                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+                retryLater(() -> refreshAccess(attempt + 1), attempt);
                 return;
             }
             boolean canUse = json.optBoolean("canUse", false);
@@ -323,6 +338,15 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 updateStatus(LocaleController.getString(R.string.SpNetGramLicenseRequired), true);
             }
         });
+    }
+
+    private void retryLater(Runnable action, int attempt) {
+        if (attempt >= MAX_RETRIES) {
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+            return;
+        }
+        updateStatus(LocaleController.getString(R.string.SpNetGramLicenseWakingServer), false);
+        AndroidUtilities.runOnUIThread(action, RETRY_DELAY_MS);
     }
 
     private void logout() {
