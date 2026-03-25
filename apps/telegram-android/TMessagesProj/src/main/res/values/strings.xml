@@ -33,7 +33,7 @@
     <string name="SpNetGramLicenseBackendTitle">Backend</string>
     <string name="SpNetGramLicenseEmail">Email</string>
     <string name="SpNetGramLicensePassword">Password</string>
-    <string name="SpNetGramLicenseDisplayName">Display name (new accounts)</string>
+    <string name="SpNetGramLicenseDisplayName">Display name (optional)</string>
     <string name="SpNetGramLicenseBackendHint">Backend URL</string>
     <string name="SpNetGramLicenseBackendTest">Test Backend</string>
     <string name="SpNetGramLicenseBackendDefault">Use Default Backend</string>

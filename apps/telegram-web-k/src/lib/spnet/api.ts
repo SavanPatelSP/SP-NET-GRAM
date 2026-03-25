@@ -129,16 +129,18 @@ async function request<T = any>(path: string, options: RequestOptions = {}): Pro
 }
 
 export function login(email: string, password: string) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
   return request<{token: string; access?: {canUse?: boolean}}>(
     '/api/auth/login',
-    {method: 'POST', body: {email, password}}
+    {method: 'POST', body: {email: normalizedEmail, password}}
   );
 }
 
 export function register(email: string, password: string, displayName: string) {
-  return request<{ok: boolean}>(
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  return request<{ok: boolean; token?: string; access?: {canUse?: boolean}}>(
     '/api/auth/register',
-    {method: 'POST', body: {email, password, displayName}}
+    {method: 'POST', body: {email: normalizedEmail, password, displayName}}
   );
 }
 

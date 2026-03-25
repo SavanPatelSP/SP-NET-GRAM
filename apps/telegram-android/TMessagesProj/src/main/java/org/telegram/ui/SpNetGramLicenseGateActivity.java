@@ -258,7 +258,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
 
     private void signIn(int attempt) {
         applyBackendOverride();
-        String email = emailInput.getText().toString().trim();
+        String email = emailInput.getText().toString().trim().toLowerCase();
         String password = passwordInput.getText().toString().trim();
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
@@ -293,10 +293,13 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
 
     private void register(int attempt) {
         applyBackendOverride();
-        String email = emailInput.getText().toString().trim();
+        String email = emailInput.getText().toString().trim().toLowerCase();
         String password = passwordInput.getText().toString().trim();
         String displayName = displayNameInput.getText().toString().trim();
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password) || TextUtils.isEmpty(displayName)) {
+        if (TextUtils.isEmpty(displayName) && email.contains("@")) {
+            displayName = email.substring(0, email.indexOf('@'));
+        }
+        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
             return;
         }
@@ -307,6 +310,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 return;
             }
             String error = getErrorMessage(json);
+            String token = json.optString("token");
             if (!json.optBoolean("ok", false)) {
                 if (!TextUtils.isEmpty(error)) {
                     updateStatus(error, true);
@@ -315,26 +319,37 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                 retryLater(() -> register(attempt + 1), attempt);
                 return;
             }
-            SpNetGramApi.login(email, password, loginJson -> {
-                if (loginJson == null) {
-                    retryLater(() -> register(attempt + 1), attempt);
-                    return;
-                }
-                String loginError = getErrorMessage(loginJson);
-                String token = loginJson.optString("token");
-                if (!TextUtils.isEmpty(loginError) && TextUtils.isEmpty(token)) {
-                    updateStatus(loginError, true);
-                    return;
-                }
-                if (!TextUtils.isEmpty(token)) {
-                    SpNetGramConfig.setBackendToken(token);
-                    SpNetGramConfig.setBackendEmail(email);
-                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseAccountReady), false);
-                    refreshAccess(0);
-                } else {
-                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
-                }
-            });
+            if (!TextUtils.isEmpty(token)) {
+                SpNetGramConfig.setBackendToken(token);
+                SpNetGramConfig.setBackendEmail(email);
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseAccountReady), false);
+                refreshAccess(0);
+            } else {
+                loginAfterRegister(email, password, attempt);
+            }
+        });
+    }
+
+    private void loginAfterRegister(String email, String password, int attempt) {
+        SpNetGramApi.login(email, password, loginJson -> {
+            if (loginJson == null) {
+                retryLater(() -> loginAfterRegister(email, password, attempt + 1), attempt);
+                return;
+            }
+            String loginError = getErrorMessage(loginJson);
+            String token = loginJson.optString("token");
+            if (!TextUtils.isEmpty(loginError) && TextUtils.isEmpty(token)) {
+                updateStatus(loginError, true);
+                return;
+            }
+            if (!TextUtils.isEmpty(token)) {
+                SpNetGramConfig.setBackendToken(token);
+                SpNetGramConfig.setBackendEmail(email);
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseAccountReady), false);
+                refreshAccess(0);
+            } else {
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseCheckFailed), true);
+            }
         });
     }
 

@@ -100,7 +100,7 @@ async function refreshAccess() {
 
 async function handleLogin() {
   if(!emailInput || !passwordInput) return;
-  const email = emailInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
   const password = passwordInput.value.trim();
   if(!email || !password) {
     setStatus(t('SpNetGramLicenseMissingFields'), true);
@@ -124,23 +124,35 @@ async function handleLogin() {
 
 async function handleRegister() {
   if(!emailInput || !passwordInput || !displayNameInput) return;
-  const email = emailInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
   const password = passwordInput.value.trim();
-  const displayName = displayNameInput.value.trim();
-  if(!email || !password || !displayName) {
+  let displayName = displayNameInput.value.trim();
+  if(!displayName && email.includes('@')) {
+    displayName = email.split('@')[0];
+  }
+  if(!email || !password) {
     setStatus(t('SpNetGramLicenseMissingFields'), true);
     return;
   }
   setStatus(t('SpNetGramLicenseCreating'));
   try {
-    await register(email, password, displayName);
+    const registerData = await register(email, password, displayName);
+    if(registerData?.token) {
+      setSpNetToken(registerData.token);
+      setSpNetEmail(email);
+      await refreshAccess();
+      toastNew({langPackKey: 'SpNetGramLicenseAccountReady'});
+      return;
+    }
     const data = await login(email, password);
     if(data?.token) {
       setSpNetToken(data.token);
       setSpNetEmail(email);
       await refreshAccess();
       toastNew({langPackKey: 'SpNetGramLicenseAccountReady'});
+      return;
     }
+    setStatus(t('SpNetGramLicenseCheckFailed'), true);
   } catch(err: any) {
     setStatus(err?.message || t('SpNetGramLicenseCheckFailed'), true);
   }

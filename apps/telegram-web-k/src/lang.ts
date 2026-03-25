@@ -1638,7 +1638,7 @@ const lang = {
   'SpNetGramLicenseAccountTitle': 'Account',
   'SpNetGramLicenseEmail': 'Email',
   'SpNetGramLicensePassword': 'Password',
-  'SpNetGramLicenseDisplayName': 'Display name (new accounts)',
+  'SpNetGramLicenseDisplayName': 'Display name (optional)',
   'SpNetGramLicenseSignIn': 'Sign In',
   'SpNetGramLicenseCreateAccount': 'Create Account',
   'SpNetGramLicenseRedeemTitle': 'License Key',

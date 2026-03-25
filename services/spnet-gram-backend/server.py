@@ -553,18 +553,23 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/auth/register":
             payload = read_json(self)
-            email = payload.get("email")
-            password = payload.get("password")
-            display_name = payload.get("displayName")
-            if not email or not password or not display_name:
+            email = (payload.get("email") or "").strip().lower()
+            password = (payload.get("password") or "").strip()
+            display_name = (payload.get("displayName") or "").strip()
+            if not email or not password:
                 return json_response(self, 400, {"error": "Missing fields"})
+            if not display_name and "@" in email:
+                display_name = email.split("@", 1)[0]
+            if not display_name:
+                display_name = "SP NET GRAM User"
             with db_connect() as conn:
                 try:
                     conn.execute(
                         "INSERT INTO users (email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?)",
                         (email, encode_password(password), display_name, now_iso()),
                     )
-                    user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"]
+                    user = conn.execute("SELECT id, role FROM users WHERE email = ?", (email,)).fetchone()
+                    user_id = user["id"]
                     maybe_bootstrap_admin(conn, user_id)
                     conn.execute(
                         "INSERT INTO wallet (user_id, sp_coin, gems, updated_at) VALUES (?, ?, ?, ?)",
@@ -586,15 +591,21 @@ class Handler(BaseHTTPRequestHandler):
                         "INSERT INTO gems_status (user_id, last_claim_at, updated_at) VALUES (?, ?, ?)",
                         (user_id, None, now_iso()),
                     )
+                    token = secrets.token_hex(16)
+                    conn.execute(
+                        "INSERT INTO sessions (token, user_id, created_at, last_seen) VALUES (?, ?, ?, ?)",
+                        (token, user_id, now_iso(), now_iso()),
+                    )
+                    access = get_access_state(conn, user_id)
                     conn.commit()
                 except sqlite3.IntegrityError:
                     return json_response(self, 409, {"error": "User already exists"})
-            return json_response(self, 200, {"ok": True})
+            return json_response(self, 200, {"ok": True, "token": token, "role": user["role"], "access": access})
 
         if parsed.path == "/api/auth/login":
             payload = read_json(self)
-            email = payload.get("email")
-            password = payload.get("password")
+            email = (payload.get("email") or "").strip().lower()
+            password = (payload.get("password") or "").strip()
             if not email or not password:
                 return json_response(self, 400, {"error": "Missing fields"})
             with db_connect() as conn:
