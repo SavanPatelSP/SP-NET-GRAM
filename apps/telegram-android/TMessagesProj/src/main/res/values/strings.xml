@@ -39,6 +39,7 @@
     <string name="SpNetGramLicenseResetSending">Sending reset code…</string>
     <string name="SpNetGramLicenseResetSent">Reset code sent.</string>
     <string name="SpNetGramLicenseResetDialog">Reset code: %1$s\n\nWe copied it to your clipboard.</string>
+    <string name="SpNetGramLicenseResetNext">Reset code copied. Enter a new password, then tap Reset again.</string>
     <string name="SpNetGramLicenseResetNoCode">No reset code returned. Check the email or create the account first.</string>
     <string name="SpNetGramLicenseResetUpdating">Updating password…</string>
     <string name="SpNetGramLicenseResetDone">Password updated. Sign in now.</string>

@@ -774,7 +774,7 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/auth/reset/confirm":
             payload = read_json(self)
             token = (payload.get("token") or "").strip()
-            new_password = payload.get("newPassword") or ""
+            new_password = (payload.get("newPassword") or "").strip()
             if not token or not new_password:
                 return json_response(self, 400, {"error": "Missing fields"})
             with db_connect() as conn:
