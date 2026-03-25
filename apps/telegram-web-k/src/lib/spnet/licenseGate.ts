@@ -286,16 +286,16 @@ export function ensureLicenseAccess() {
     return;
   }
   accessStatus()
-    .then((access) => {
-      if(!access?.canUse) {
-        showGate({lock: true});
-      } else if(gateLocked) {
-        hideGate();
-      }
-    })
-    .catch(() => {
+  .then((access) => {
+    if(!access?.canUse) {
       showGate({lock: true});
-    });
+    } else if(gateLocked) {
+      hideGate();
+    }
+  })
+  .catch(() => {
+    showGate({lock: true});
+  });
 }
 
 export function showLicenseGate(options: GateOptions = {}) {
@@ -311,16 +311,16 @@ export function startAccessRefreshTimer() {
       return;
     }
     accessStatus()
-      .then((access) => {
-        if(!access?.canUse) {
-          showGate({lock: true});
-        } else if(gateLocked) {
-          hideGate();
-        }
-      })
-      .catch(() => {
+    .then((access) => {
+      if(!access?.canUse) {
         showGate({lock: true});
-      });
+      } else if(gateLocked) {
+        hideGate();
+      }
+    })
+    .catch(() => {
+      showGate({lock: true});
+    });
   }, ACCESS_REFRESH_INTERVAL);
 
   document.addEventListener('visibilitychange', () => {

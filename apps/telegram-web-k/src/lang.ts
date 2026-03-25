@@ -4458,7 +4458,31 @@ const lang = {
   'ArchiveFeatureDetails.Hide.Subtitle': 'Right-click on the Archive and choose **%s**. You can always access it from the main menu.',
   'ArchiveFeatureDetails.Stories.Title': 'Stories',
   'ArchiveFeatureDetails.Stories.Subtitle': 'Archive Stories from your contacts separately from chats with them.',
-  'ArchiveFeatureDetails.Button': 'Got it'
+  'ArchiveFeatureDetails.Button': 'Got it',
+
+  // Legacy Telegram keys preserved for SP NET GRAM branding
+  'TelegramFeatures': 'SP NET GRAM Features',
+  'BoostingTelegramPremiumFor': 'SP NET GRAM Premium for %s',
+  'GiftTelegramPremiumTitle': 'Gift SP NET GRAM Premium',
+  'GiftTelegramPremiumDescription': 'Give **%1$s** access to exclusive features with **SP NET GRAM Premium**.',
+  'TelegramPremiumSubscribedTitle': 'You are all set!',
+  'TelegramPremiumSubscribedSubtitle': 'Thank you for subscribing to **SP NET GRAM Premium**.\nHere’s what is now unlocked.',
+  'TelegramPremiumPeerTitle': '%s is a subscriber of **SP NET GRAM Premium**',
+  'TelegramPremiumPeerSubtitle': 'Owners of **SP NET GRAM Premium** accounts have exclusive access to multiple additional features.',
+  'TelegramPremiumPeerTitleEmojiStatus': '%s set this emoji from [%s]() as their current status.',
+  'TelegramPremiumPeerTitleEmojiStatusNoPack': '%s set this emoji as their current status.',
+  'TelegramPremiumPeerSubtitleEmojiStatus': 'Emoji statuses are a premium feature. Other features included in **SP NET GRAM Premium**:',
+  'TelegramPremiumUserGiftedPremiumDialogTitleWithPlural': '**%1$s** has gifted you a %2$s subscription to SP NET GRAM Premium.',
+  'TelegramPremiumUserGiftedPremiumDialogTitleWithPluralSomeone': 'Someone has gifted you a %1$s subscription to SP NET GRAM Premium.',
+  'TelegramPremiumUserGiftedPremiumDialogSubtitle': 'You now have access to additional features.',
+  'TelegramPremiumUserGiftedPremiumOutboundDialogSubtitle': '**%1$s** now has access to additional features.',
+  'TelegramStars': 'SP NET GRAM Stars',
+  'TelegramStarsGift': 'Gift Stars to Friends',
+  'MenuTelegramStars': 'My Stars',
+  'MenuTelegramStarsTon': 'My TON',
+  'StarGiftValueAboutLastTelegram': 'This is the price at which **%s** was last sold on SP NET GRAM',
+  'StarGiftViewResaleTelegram': '%s for sale on SP NET GRAM %s',
+  'Chat.Service.PeerJoinedTelegram': '%@ joined SP NET GRAM'
 };
 
 export default lang;

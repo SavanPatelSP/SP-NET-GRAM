@@ -89,7 +89,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
         const data = await premiumPlans();
         plansCache = data?.plans || [];
         await updateState({premiumPlans: plansCache});
-      } catch (err) {
+      } catch(err) {
         // optional
       }
     };
@@ -99,7 +99,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
       try {
         const profile = await getProfile();
         await updateState({spgId: profile?.spgId || ''});
-      } catch (err) {
+      } catch(err) {
         handleAuthError(err);
       }
     };
@@ -109,7 +109,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
       try {
         const data = await premiumStatus();
         await updateState({premiumStatus: data?.premium});
-      } catch (err) {
+      } catch(err) {
         handleAuthError(err);
       }
     };
@@ -124,7 +124,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
           airdrop: data?.airdrop,
           gemsStatus: data?.gemsStatus
         });
-      } catch (err) {
+      } catch(err) {
         handleAuthError(err);
       }
     };
@@ -158,7 +158,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
           await updateState({assistantLast: result.reply});
         }
         toastNew({langPackKey: 'SpNetGramAssistantToast'});
-      } catch (err) {
+      } catch(err) {
         handleAuthError(err);
         toastNew({langPackKey: 'Error.AnError'});
       }
@@ -180,7 +180,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
           await updateState({spgId: result.spgId});
           toastNew({langPackKey: 'SpNetGramToastMinted', langPackArguments: [result.spgId]});
         }
-      } catch (err) {
+      } catch(err) {
         handleAuthError(err);
         toastNew({langPackKey: 'Error.AnError'});
       }
@@ -217,7 +217,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
             await updateState({spCoin: result.spCoin});
           }
           toastNew({langPackKey: 'SpNetGramAirdropClaimedToast'});
-        } catch (err) {
+        } catch(err) {
           handleAuthError(err);
           toastNew({langPackKey: 'Error.AnError'});
         }
@@ -244,7 +244,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
           } else {
             toastNew({langPackKey: 'SpNetGramGemsClaimedToast', langPackArguments: [spState.gems || 0]});
           }
-        } catch (err) {
+        } catch(err) {
           handleAuthError(err);
           toastNew({langPackKey: 'Error.AnError'});
         }
@@ -345,9 +345,9 @@ export default class AppSpNetGramTab extends SliderSuperTab {
         const premium = spState.premiumStatus;
         if(premium) {
           const planLabel = (i18n('SpNetGramPremiumPlanLabel', [planName(premium.planId)]) as HTMLElement).textContent || '';
-          const statusKey: LangPackKey = premium.planId && premium.planId !== 'free' && premium.status === 'active'
-            ? 'SpNetGramPremiumActive'
-            : 'SpNetGramPremiumInactive';
+          const statusKey: LangPackKey = premium.planId && premium.planId !== 'free' && premium.status === 'active' ?
+            'SpNetGramPremiumActive' :
+            'SpNetGramPremiumInactive';
           const statusText = (i18n(statusKey) as HTMLElement).textContent || '';
           const expiryText = formatExpiry(premium.expiresAt || undefined);
           setSubtitle(premiumRow, `${planLabel} · ${statusText} · ${expiryText}`);
@@ -362,9 +362,9 @@ export default class AppSpNetGramTab extends SliderSuperTab {
       }
 
       if(isSignedIn) {
-        const balanceText = spState.spCoin !== undefined && spState.spCoin !== null
-          ? (i18n('SpNetGramCoinBalance', [spState.spCoin]) as HTMLElement).textContent || ''
-          : loadingText;
+        const balanceText = spState.spCoin !== undefined && spState.spCoin !== null ?
+          (i18n('SpNetGramCoinBalance', [spState.spCoin]) as HTMLElement).textContent || '' :
+          loadingText;
         let airdropText = (i18n('SpNetGramAirdropUnclaimed') as HTMLElement).textContent || '';
         if(spState.airdrop?.canClaim) {
           airdropText = (i18n('SpNetGramAirdropReady') as HTMLElement).textContent || '';
@@ -381,9 +381,9 @@ export default class AppSpNetGramTab extends SliderSuperTab {
       }
 
       if(isSignedIn) {
-        const gemsBalance = spState.gems !== undefined && spState.gems !== null
-          ? (i18n('SpNetGramGemsBalance', [spState.gems]) as HTMLElement).textContent || ''
-          : loadingText;
+        const gemsBalance = spState.gems !== undefined && spState.gems !== null ?
+          (i18n('SpNetGramGemsBalance', [spState.gems]) as HTMLElement).textContent || '' :
+          loadingText;
         let gemsStatusText = '';
         if(spState.gemsStatus?.canClaim) {
           gemsStatusText = (i18n('SpNetGramGemsClaimReady') as HTMLElement).textContent || '';
@@ -421,7 +421,7 @@ export default class AppSpNetGramTab extends SliderSuperTab {
           expiresAt: access?.premium?.expiresAt,
           checkedAt: Date.now()
         }});
-      } catch (err: any) {
+      } catch(err: any) {
         handleAuthError(err);
         const status = err?.status;
         const locked = status === 401 || status === 403;

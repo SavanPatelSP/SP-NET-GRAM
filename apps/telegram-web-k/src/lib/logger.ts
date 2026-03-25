@@ -150,7 +150,7 @@ export function logger(
 
   methods.forEach(([method, logType]) => {
     log[method] = function(...args: any[]) {
-      return type & logType && console[method](style, dT(), prefix, /* getCallerFunctionName(), */ ...args);
+      return type & logType && (console[method] as (...args: any[]) => void)(style, dT(), prefix, /* getCallerFunctionName(), */ ...args);
     };
   });
 

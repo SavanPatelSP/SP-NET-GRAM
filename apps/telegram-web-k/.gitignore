@@ -21,3 +21,4 @@ src/langPackLocalVersion.ts
 
 # Throw files you don't need in this folder
 ignore
+.vercel
