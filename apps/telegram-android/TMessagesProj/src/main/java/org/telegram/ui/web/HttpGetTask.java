@@ -34,8 +34,8 @@ public class HttpGetTask extends AsyncTask<String, Void, String> {
         try {
             URL url = new URL(urlString);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(15000);
-            urlConnection.setReadTimeout(20000);
+            urlConnection.setConnectTimeout(20000);
+            urlConnection.setReadTimeout(45000);
             urlConnection.setInstanceFollowRedirects(true);
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 if (e.getKey() == null || e.getValue() == null) continue;

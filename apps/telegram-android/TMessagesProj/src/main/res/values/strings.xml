@@ -54,6 +54,7 @@
     <string name="SpNetGramLicenseBackendOk">Backend: OK</string>
     <string name="SpNetGramLicenseBackendFailed">Backend: unavailable.</string>
     <string name="SpNetGramLicenseBackendDefaultOk">Backend reset to default.</string>
+    <string name="SpNetGramLicenseBackendInvalid">Backend URL must start with https://</string>
     <string name="SpNetGramLicenseMissingFields">Please fill in all required fields.</string>
     <string name="SpNetGramLicenseMissingKey">Please enter a license key.</string>
     <string name="SpNetGramLicenseSigningIn">Signing in…</string>

@@ -441,11 +441,20 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     }
 
     private void testBackend() {
+        testBackend(0);
+    }
+
+    private void testBackend(int attempt) {
         applyBackendOverride();
+        String backend = backendInput == null ? "" : backendInput.getText().toString().trim();
+        if (!TextUtils.isEmpty(backend) && !backend.startsWith("http")) {
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendInvalid), true);
+            return;
+        }
         updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendTesting), false);
         SpNetGramApi.health(json -> {
             if (json == null) {
-                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseBackendFailed), true);
+                retryLater(() -> testBackend(attempt + 1), attempt);
                 return;
             }
             if (json.optBoolean("ok", false)) {
