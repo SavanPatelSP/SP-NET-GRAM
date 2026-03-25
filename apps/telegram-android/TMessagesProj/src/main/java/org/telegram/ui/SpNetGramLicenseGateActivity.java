@@ -35,6 +35,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     private EditTextBoldCursor emailInput;
     private EditTextBoldCursor passwordInput;
     private EditTextBoldCursor displayNameInput;
+    private EditTextBoldCursor resetCodeInput;
     private EditTextBoldCursor licenseInput;
     private EditTextBoldCursor backendInput;
 
@@ -118,6 +119,9 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         displayNameInput = createInput(context, LocaleController.getString(R.string.SpNetGramLicenseDisplayName), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         accountCard.addView(displayNameInput, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
 
+        resetCodeInput = createInput(context, LocaleController.getString(R.string.SpNetGramLicenseResetCode), InputType.TYPE_CLASS_TEXT);
+        accountCard.addView(resetCodeInput, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
+
         container.addView(accountCard, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
 
         TextView backendTitle = createSectionTitle(context, LocaleController.getString(R.string.SpNetGramLicenseBackendTitle));
@@ -144,6 +148,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         TextView registerButton = createSecondaryButton(context, LocaleController.getString(R.string.SpNetGramLicenseCreateAccount));
         registerButton.setOnClickListener(v -> register());
         container.addView(registerButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+
+        TextView resetButton = createSecondaryButton(context, LocaleController.getString(R.string.SpNetGramLicenseResetPassword));
+        resetButton.setOnClickListener(v -> resetPassword());
+        container.addView(resetButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
 
         TextView licenseTitle = createSectionTitle(context, LocaleController.getString(R.string.SpNetGramLicenseRedeemTitle));
         container.addView(licenseTitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 16, 0, 0));
@@ -327,6 +335,58 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
             } else {
                 loginAfterRegister(email, password, attempt);
             }
+        });
+    }
+
+    private void resetPassword() {
+        resetPassword(0);
+    }
+
+    private void resetPassword(int attempt) {
+        applyBackendOverride();
+        String email = emailInput.getText().toString().trim().toLowerCase();
+        String newPassword = passwordInput.getText().toString();
+        String resetCode = resetCodeInput.getText().toString().trim();
+        if (TextUtils.isEmpty(email)) {
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
+            return;
+        }
+        if (TextUtils.isEmpty(resetCode)) {
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetSending), false);
+            SpNetGramApi.requestPasswordReset(email, json -> {
+                if (json == null) {
+                    retryLater(() -> resetPassword(attempt + 1), attempt);
+                    return;
+                }
+                String error = getErrorMessage(json);
+                if (!TextUtils.isEmpty(error)) {
+                    updateStatus(error, true);
+                    return;
+                }
+                String token = json.optString("resetToken");
+                if (!TextUtils.isEmpty(token)) {
+                    resetCodeInput.setText(token);
+                }
+                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetSent), false);
+            });
+            return;
+        }
+        if (TextUtils.isEmpty(newPassword)) {
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
+            return;
+        }
+        updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetUpdating), false);
+        SpNetGramApi.confirmPasswordReset(resetCode, newPassword, json -> {
+            if (json == null) {
+                retryLater(() -> resetPassword(attempt + 1), attempt);
+                return;
+            }
+            String error = getErrorMessage(json);
+            if (!json.optBoolean("ok", false)) {
+                updateStatus(TextUtils.isEmpty(error) ? LocaleController.getString(R.string.SpNetGramLicenseCheckFailed) : error, true);
+                return;
+            }
+            updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetDone), false);
         });
     }
 

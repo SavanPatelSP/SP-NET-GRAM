@@ -77,6 +77,39 @@ public class SpNetGramApi {
         }
     }
 
+    public static void requestPasswordReset(String email, Utilities.Callback<JSONObject> callback) {
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("email", email);
+            new HttpPostTask("application/json", payload.toString(), result -> {
+                if (callback != null) {
+                    callback.run(parse(result));
+                }
+            }).execute(buildUrl("/api/auth/reset/request"));
+        } catch (Exception e) {
+            if (callback != null) {
+                callback.run(null);
+            }
+        }
+    }
+
+    public static void confirmPasswordReset(String token, String newPassword, Utilities.Callback<JSONObject> callback) {
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("token", token);
+            payload.put("newPassword", newPassword);
+            new HttpPostTask("application/json", payload.toString(), result -> {
+                if (callback != null) {
+                    callback.run(parse(result));
+                }
+            }).execute(buildUrl("/api/auth/reset/confirm"));
+        } catch (Exception e) {
+            if (callback != null) {
+                callback.run(null);
+            }
+        }
+    }
+
     public static void accessStatus(String token, Utilities.Callback<JSONObject> callback) {
         HttpGetTask task = new HttpGetTask(result -> {
             if (callback != null) {

@@ -45,6 +45,7 @@ IAP_VERIFY = os.getenv("IAP_VERIFY", "0") == "1"
 REQUIRE_LICENSE = os.getenv("REQUIRE_LICENSE", "1") == "1"
 LICENSE_KEY_PREFIX = os.getenv("LICENSE_KEY_PREFIX", "SPG")
 MAX_LICENSE_BATCH = 500
+RESET_TOKEN_TTL_MIN = int(os.getenv("RESET_TOKEN_TTL_MIN", "30"))
 
 ROLE_ORDER = ["user", "manager", "admin"]
 
@@ -154,6 +155,20 @@ def ensure_schema(conn):
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_license_keys_key ON license_keys(license_key)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_license_redemptions_user ON license_redemptions(user_id)")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS password_resets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          token TEXT UNIQUE NOT NULL,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          used_at TEXT,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token)")
 
 
 def hash_password(password: str, salt: str) -> str:
@@ -172,6 +187,12 @@ def verify_password(password: str, encoded: str) -> bool:
     except ValueError:
         return False
     return hash_password(password, salt) == digest
+
+
+def build_reset_token():
+    token = secrets.token_urlsafe(9)
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=RESET_TOKEN_TTL_MIN)
+    return token, expires_at.replace(microsecond=0).isoformat() + "Z"
 
 
 def read_json(handler):
@@ -607,6 +628,58 @@ class Handler(BaseHTTPRequestHandler):
                 except sqlite3.IntegrityError:
                     return json_response(self, 409, {"error": "User already exists"})
             return json_response(self, 200, {"ok": True, "token": token, "role": user["role"], "access": access})
+
+        if parsed.path == "/api/auth/reset/request":
+            payload = read_json(self)
+            email_raw = payload.get("email") or ""
+            email = email_raw.strip().lower()
+            if not email:
+                return json_response(self, 400, {"error": "Missing fields"})
+            with db_connect() as conn:
+                user = conn.execute(
+                    "SELECT id FROM users WHERE email = ? COLLATE NOCASE",
+                    (email,),
+                ).fetchone()
+                if user:
+                    conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user["id"],))
+                    token, expires_at = build_reset_token()
+                    conn.execute(
+                        "INSERT INTO password_resets (user_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                        (user["id"], token, now_iso(), expires_at),
+                    )
+                    conn.commit()
+                    return json_response(self, 200, {"ok": True, "resetToken": token, "expiresAt": expires_at})
+            return json_response(self, 200, {"ok": True})
+
+        if parsed.path == "/api/auth/reset/confirm":
+            payload = read_json(self)
+            token = (payload.get("token") or "").strip()
+            new_password = payload.get("newPassword") or ""
+            if not token or not new_password:
+                return json_response(self, 400, {"error": "Missing fields"})
+            with db_connect() as conn:
+                row = conn.execute(
+                    "SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token = ?",
+                    (token,),
+                ).fetchone()
+                if not row:
+                    return json_response(self, 400, {"error": "Invalid reset token"})
+                if row["used_at"]:
+                    return json_response(self, 400, {"error": "Reset token already used"})
+                expires_at = parse_iso(row["expires_at"])
+                if expires_at and expires_at < datetime.datetime.utcnow().replace(tzinfo=None):
+                    return json_response(self, 400, {"error": "Reset token expired"})
+                conn.execute(
+                    "UPDATE users SET password_hash = ? WHERE id = ?",
+                    (encode_password(new_password), row["user_id"]),
+                )
+                conn.execute(
+                    "UPDATE password_resets SET used_at = ? WHERE id = ?",
+                    (now_iso(), row["id"]),
+                )
+                conn.execute("DELETE FROM sessions WHERE user_id = ?", (row["user_id"],))
+                conn.commit()
+            return json_response(self, 200, {"ok": True})
 
         if parsed.path == "/api/auth/login":
             payload = read_json(self)

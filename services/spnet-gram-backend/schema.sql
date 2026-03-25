@@ -84,5 +84,16 @@ CREATE TABLE IF NOT EXISTS license_redemptions (
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS password_resets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_license_keys_key ON license_keys(license_key);
 CREATE INDEX IF NOT EXISTS idx_license_redemptions_user ON license_redemptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);

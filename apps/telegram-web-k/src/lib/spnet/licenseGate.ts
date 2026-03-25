@@ -6,6 +6,8 @@ import {
   getSpNetEmail,
   getSpNetToken,
   login,
+  requestPasswordReset,
+  confirmPasswordReset,
   redeemLicense,
   register,
   setSpNetEmail,
@@ -27,11 +29,13 @@ let statusText: HTMLParagraphElement | null = null;
 let emailInput: HTMLInputElement | null = null;
 let passwordInput: HTMLInputElement | null = null;
 let displayNameInput: HTMLInputElement | null = null;
+let resetCodeInput: HTMLInputElement | null = null;
 let licenseInput: HTMLInputElement | null = null;
 let closeButton: HTMLButtonElement | null = null;
 
 let loginButton: HTMLButtonElement | null = null;
 let registerButton: HTMLButtonElement | null = null;
+let resetButton: HTMLButtonElement | null = null;
 let redeemButton: HTMLButtonElement | null = null;
 let refreshButton: HTMLButtonElement | null = null;
 let logoutButton: HTMLButtonElement | null = null;
@@ -180,6 +184,41 @@ async function handleRedeem() {
   }
 }
 
+async function handleResetPassword() {
+  if(!emailInput || !passwordInput || !resetCodeInput) return;
+  const email = emailInput.value.trim().toLowerCase();
+  const newPassword = passwordInput.value.trim();
+  const code = resetCodeInput.value.trim();
+  if(!email) {
+    setStatus(t('SpNetGramLicenseMissingFields'), true);
+    return;
+  }
+  if(!code) {
+    setStatus(t('SpNetGramLicenseResetSending'));
+    try {
+      const data = await requestPasswordReset(email);
+      if(data?.resetToken) {
+        resetCodeInput.value = data.resetToken;
+      }
+      setStatus(t('SpNetGramLicenseResetSent'));
+    } catch(err: any) {
+      setStatus(err?.message || t('SpNetGramLicenseCheckFailed'), true);
+    }
+    return;
+  }
+  if(!newPassword) {
+    setStatus(t('SpNetGramLicenseMissingFields'), true);
+    return;
+  }
+  setStatus(t('SpNetGramLicenseResetUpdating'));
+  try {
+    await confirmPasswordReset(code, newPassword);
+    setStatus(t('SpNetGramLicenseResetDone'));
+  } catch(err: any) {
+    setStatus(err?.message || t('SpNetGramLicenseCheckFailed'), true);
+  }
+}
+
 function handleLogout() {
   clearSpNetToken();
   setStatus(t('SpNetGramLicenseLoggedOut'));
@@ -237,6 +276,11 @@ function buildGate() {
   displayNameInput.placeholder = t('SpNetGramLicenseDisplayName');
   displayNameInput.className = 'spnet-license-gate__input';
 
+  resetCodeInput = document.createElement('input');
+  resetCodeInput.type = 'text';
+  resetCodeInput.placeholder = t('SpNetGramLicenseResetCode');
+  resetCodeInput.className = 'spnet-license-gate__input';
+
   const accountButtons = document.createElement('div');
   accountButtons.className = 'spnet-license-gate__actions';
 
@@ -250,9 +294,14 @@ function buildGate() {
   registerButton.textContent = t('SpNetGramLicenseCreateAccount');
   registerButton.addEventListener('click', handleRegister);
 
-  accountButtons.append(loginButton, registerButton);
+  resetButton = document.createElement('button');
+  resetButton.className = 'spnet-license-gate__button';
+  resetButton.textContent = t('SpNetGramLicenseResetPassword');
+  resetButton.addEventListener('click', handleResetPassword);
 
-  accountSection.append(accountTitle, emailInput, passwordInput, displayNameInput, accountButtons);
+  accountButtons.append(loginButton, registerButton, resetButton);
+
+  accountSection.append(accountTitle, emailInput, passwordInput, displayNameInput, resetCodeInput, accountButtons);
 
   const licenseSection = document.createElement('div');
   licenseSection.className = 'spnet-license-gate__section';

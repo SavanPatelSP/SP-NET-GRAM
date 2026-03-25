@@ -144,6 +144,21 @@ export function register(email: string, password: string, displayName: string) {
   );
 }
 
+export function requestPasswordReset(email: string) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  return request<{ok: boolean; resetToken?: string; expiresAt?: string}>(
+    '/api/auth/reset/request',
+    {method: 'POST', body: {email: normalizedEmail}}
+  );
+}
+
+export function confirmPasswordReset(token: string, newPassword: string) {
+  return request<{ok: boolean}>(
+    '/api/auth/reset/confirm',
+    {method: 'POST', body: {token, newPassword}}
+  );
+}
+
 export function accessStatus() {
   return request<AccessStatus>(
     '/api/access/status',
