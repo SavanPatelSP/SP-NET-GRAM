@@ -286,8 +286,8 @@
     <string name="ALongTimeAgo">마지막으로 접속한 지 오래됨</string>
     <string name="NewMessageTitle">메시지 보내기</string>
     <string name="InviteFriendsHelp">텔레그램 초대장을 보낼 연락처를 선택하세요</string>
-    <string name="InviteToSP NET GRAM">텔레그램으로 초대</string>
-    <string name="ShareSP NET GRAM">텔레그램 공유하기...</string>
+    <string name="InviteToTelegram">텔레그램으로 초대</string>
+    <string name="ShareTelegram">텔레그램 공유하기...</string>
     <string name="UpdateContactsTitle">연락처를 업데이트할까요?</string>
     <string name="UpdateContactsMessage">텔레그램이 아직 동기화되지 않은 여러 연락처를 찾아냈습니다. 연락처를 동기화하시겠습니까? 본인의 기기, SIM 카드와 Google 계정을 사용하는 중이라면 \'확인\'을 누르십시오.</string>
     <string name="SortedByName">이름순으로 정렬</string>
@@ -645,13 +645,13 @@
     <string name="UseProxySecret">비밀 키</string>
     <string name="UseProxyUsername">사용자명</string>
     <string name="UseProxySocks5">SOCKS5 프록시</string>
-    <string name="UseProxySP NET GRAM">MTProto 프록시</string>
-    <string name="UseProxySP NET GRAMError">사용하고 계신 프록시는 올바르게 설정되지 않았기에 비활성화될 것입니다. 다른 프록시를 사용해 주세요.</string>
+    <string name="UseProxyTelegram">MTProto 프록시</string>
+    <string name="UseProxyTelegramError">사용하고 계신 프록시는 올바르게 설정되지 않았기에 비활성화될 것입니다. 다른 프록시를 사용해 주세요.</string>
     <string name="UseProxySponsor">프록시 협찬</string>
     <string name="UseProxySponsorInfo">이 채널은 회원님의 프록시 서버로 인해 나타났습니다. 채널을 대화방 목록에서 제거하려면, 텔레그램 설정 &gt; 데이터 및 저장소에서 프록시 사용을 해제하세요.</string>
     <string name="UseProxyInfo">SOCKS5 프록시 설정입니다.</string>
-    <string name="UseProxySP NET GRAMInfo">MTProto 프록시 설정입니다.</string>
-    <string name="UseProxySP NET GRAMInfo2">이 프록시를 사용하시면 후원 채널이 대화방 목록에 표시될 수 있습니다. 회원님의 텔레그램 트래픽은 전혀 공개되지 않습니다.</string>
+    <string name="UseProxyTelegramInfo">MTProto 프록시 설정입니다.</string>
+    <string name="UseProxyTelegramInfo2">이 프록시를 사용하시면 후원 채널이 대화방 목록에 표시될 수 있습니다. 회원님의 텔레그램 트래픽은 전혀 공개되지 않습니다.</string>
     <string name="UseProxyForCalls">전화에 프록시 사용</string>
     <string name="UseProxyForCallsInfo">프록시 서버는 통화 품질을 저하시킬 수 있습니다.</string>
     <string name="ConnectingToProxyEnable">사용</string>
@@ -781,7 +781,7 @@
     <string name="DisablePasscodeConfirmMessage">정말 암호를 비활성화 하겠습니까?</string>
     <string name="DisablePasscodeTurnOff">끄기</string>
     <string name="EnterNewPasscode">새 암호를 입력하세요</string>
-    <string name="EnterYourSP NET GRAMPasscode">텔레그램 암호 입력</string>
+    <string name="EnterYourTelegramPasscode">텔레그램 암호 입력</string>
     <string name="AutoLock">자동 잠금</string>
     <string name="AutoLockInfo">일정 시간이 지나면 암호를 묻게 됩니다.</string>
     <string name="AutoLockInTime">%1$s 뒤</string>
@@ -926,7 +926,7 @@
     <string name="DeleteAll">모두 삭제</string>
     <string name="StopLoadingTitle">로딩을 중단할까요?</string>
     <string name="StopLoading">불러오기를 중단할까요?</string>
-    <string name="UpdateSP NET GRAM">텔레그램을 업데이트하세요</string>
+    <string name="UpdateTelegram">텔레그램을 업데이트하세요</string>
     <string name="UpdateAppAlert">죄송합니다. 텔레그램 앱이 최신 버전이 아니기에 이 요청을 받을 수 없습니다. 텔레그램을 업데이트해 주세요.</string>
     <string name="InvalidPhoneNumber">전화번호가 잘못되었습니다. 번호를 확인하여 다시 시도해 주세요.</string>
     <string name="PleaseLoginPassport">텔레그램 패스포트를 사용하려면 텔레그램 계정에 로그인해 주세요.</string>

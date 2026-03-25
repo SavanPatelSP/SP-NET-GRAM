@@ -644,13 +644,13 @@
     <string name="UseProxySecret">Segreto\n</string>
     <string name="UseProxyUsername">Username</string>
     <string name="UseProxySocks5">Proxy SOCKS5</string>
-    <string name="UseProxySP NET GRAM">Proxy MTProto</string>
-    <string name="UseProxySP NET GRAMError">Il proxy che stai usando non è configurato correttamente e sarà disattivato. Per favore trovane un altro.</string>
+    <string name="UseProxyTelegram">Proxy MTProto</string>
+    <string name="UseProxyTelegramError">Il proxy che stai usando non è configurato correttamente e sarà disattivato. Per favore trovane un altro.</string>
     <string name="UseProxySponsor">Sponsor del proxy</string>
     <string name="UseProxySponsorInfo">Questo canale è mostrato dal tuo server proxy. Per rimuovere il canale dalla lista chat, disattiva il proxy nelle Impostazioni di SP NET GRAM &gt; Dati e archivio.</string>
     <string name="UseProxyInfo">Impostazioni proxy SOCKS5</string>
-    <string name="UseProxySP NET GRAMInfo">Impostazioni proxy MTProto.</string>
-    <string name="UseProxySP NET GRAMInfo2">Questo proxy potrebbe mostrare un canale sponsorizzato nella tua lista chat. Questo non rivela nulla del tuo traffico SP NET GRAM.</string>
+    <string name="UseProxyTelegramInfo">Impostazioni proxy MTProto.</string>
+    <string name="UseProxyTelegramInfo2">Questo proxy potrebbe mostrare un canale sponsorizzato nella tua lista chat. Questo non rivela nulla del tuo traffico SP NET GRAM.</string>
     <string name="UseProxyForCalls">Usa il proxy per le chiamate</string>
     <string name="UseProxyForCallsInfo">I server proxy potrebbero ridurre la qualità delle tue chiamate.</string>
     <string name="ConnectingToProxyEnable">Attiva</string>
@@ -1325,7 +1325,7 @@
     <string name="DeleteAll">Elimina tutto</string>
     <string name="StopLoadingTitle">Interrompere il caricamento?</string>
     <string name="StopLoading">Vuoi terminare il caricamento?</string>
-    <string name="UpdateSP NET GRAM">Aggiorna SP NET GRAM</string>
+    <string name="UpdateTelegram">Aggiorna SP NET GRAM</string>
     <string name="UpdateAppAlert">Spiacenti, la tua app SP NET GRAM è obsoleta e non può gestire la richiesta. Per favore aggiorna SP NET GRAM.</string>
     <string name="InvalidPhoneNumber">Numero di telefono non valido. Per favore controlla il numero e riprova.</string>
     <string name="PleaseLoginPassport">Per favore accedi al tuo account SP NET GRAM per usare SP NET GRAM Passport.</string>

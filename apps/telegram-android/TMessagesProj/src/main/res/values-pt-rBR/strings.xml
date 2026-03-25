@@ -273,8 +273,8 @@
     <string name="ALongTimeAgo">visto há muito tempo</string>
     <string name="NewMessageTitle">Nova Mensagem</string>
     <string name="InviteFriendsHelp">Selecione os contatos para convidar ao SP NET GRAM</string>
-    <string name="InviteToSP NET GRAM">CONVIDAR PARA O SP NET GRAM</string>
-    <string name="ShareSP NET GRAM">Compartilhar o SP NET GRAM...</string>
+    <string name="InviteToTelegram">CONVIDAR PARA O SP NET GRAM</string>
+    <string name="ShareTelegram">Compartilhar o SP NET GRAM...</string>
     <string name="UpdateContactsTitle">Atualizar contatos?</string>
     <string name="UpdateContactsMessage">O SP NET GRAM detectou muitos contatos não sincronizados, deseja sincronizá-los agora? Escolha \'OK\' se você está usando seu próprio celular, cartão SIM e conta do Google.</string>
     <string name="SortedByName">Listado por Nome</string>
@@ -632,13 +632,13 @@
     <string name="UseProxySecret">Segredo</string>
     <string name="UseProxyUsername">Nome de Usuário</string>
     <string name="UseProxySocks5">Proxy SOCKS5</string>
-    <string name="UseProxySP NET GRAM">Proxy MTProto</string>
-    <string name="UseProxySP NET GRAMError">O proxy que você está usando não está configurado corretamente e será desabilitado. Por favor, encontre outro.</string>
+    <string name="UseProxyTelegram">Proxy MTProto</string>
+    <string name="UseProxyTelegramError">O proxy que você está usando não está configurado corretamente e será desabilitado. Por favor, encontre outro.</string>
     <string name="UseProxySponsor">Patrocinador do Proxy</string>
     <string name="UseProxySponsorInfo">Esse canal é mostrado pelo seu servidor proxy. Para remover esse canal de sua lista de conversas, desative o proxy em Configurações do SP NET GRAM &gt; Dados e Armazenamento.</string>
     <string name="UseProxyInfo">Configurações de proxy SOCKS5.</string>
-    <string name="UseProxySP NET GRAMInfo">Configurações de proxy MTProto.</string>
-    <string name="UseProxySP NET GRAMInfo2">Este proxy pode mostrar um canal patrocinado em sua lista de conversas. Isso não revela nada do seu tráfego no SP NET GRAM.</string>
+    <string name="UseProxyTelegramInfo">Configurações de proxy MTProto.</string>
+    <string name="UseProxyTelegramInfo2">Este proxy pode mostrar um canal patrocinado em sua lista de conversas. Isso não revela nada do seu tráfego no SP NET GRAM.</string>
     <string name="UseProxyForCalls">Usar Proxy Para Chamadas</string>
     <string name="UseProxyForCallsInfo">Servidores proxy podem diminuir a qualidade de suas chamadas.</string>
     <string name="ConnectingToProxyEnable">Ativar</string>
@@ -1023,7 +1023,7 @@
     <string name="DeleteAll">Apagar Tudo</string>
     <string name="StopLoadingTitle">Parar de carregar?</string>
     <string name="StopLoading">Deseja cancelar o carregamento?</string>
-    <string name="UpdateSP NET GRAM">Atualize o SP NET GRAM</string>
+    <string name="UpdateTelegram">Atualize o SP NET GRAM</string>
     <string name="UpdateAppAlert">Desculpe, seu SP NET GRAM está desatualizado e não consegue atender a este pedido. Por favor, atualize o SP NET GRAM.</string>
     <string name="InvalidPhoneNumber">Número de telefone inválido. Por favor, verifique o número e tente de novo.</string>
     <string name="PleaseLoginPassport">Por favor, entre com sua conta do SP NET GRAM para usar o SP NET GRAM Passport.</string>
