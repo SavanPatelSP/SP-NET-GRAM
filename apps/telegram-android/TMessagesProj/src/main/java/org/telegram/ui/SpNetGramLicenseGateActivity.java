@@ -370,8 +370,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
                     resetCodeInput.setSelection(token.length());
                     AndroidUtilities.addToClipboard(token);
                     showResetTokenDialog(token);
+                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetSent), false);
+                } else {
+                    updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetNoCode), true);
                 }
-                updateStatus(LocaleController.getString(R.string.SpNetGramLicenseResetSent), false);
             });
             return;
         }

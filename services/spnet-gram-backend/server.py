@@ -769,7 +769,7 @@ class Handler(BaseHTTPRequestHandler):
                     log_event("auth.reset.request", "Password reset requested", user["id"], "info", {"email": email})
                     return json_response(self, 200, {"ok": True, "resetToken": token, "expiresAt": expires_at})
             log_event("auth.reset.request", "Password reset requested (not found)", None, "warn", {"email": email})
-            return json_response(self, 200, {"ok": True})
+            return json_response(self, 404, {"error": "Account not found"})
 
         if parsed.path == "/api/auth/reset/confirm":
             payload = read_json(self)
