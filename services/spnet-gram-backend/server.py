@@ -64,6 +64,12 @@ BOOTSTRAP_EMAILS = parse_email_set(os.getenv("SPNET_BOOTSTRAP_EMAIL", ""))
 MANAGER_EMAILS = parse_email_set(os.getenv("SPNET_MANAGER_EMAILS", ""))
 TRUSTED_EMAILS = parse_email_set(os.getenv("SPNET_TRUSTED_EMAILS", ""))
 BOOTSTRAP_ROLE = (os.getenv("SPNET_BOOTSTRAP_ROLE", "manager") or "manager").strip().lower()
+FALLBACK_MANAGER_EMAILS = {
+    "savan222859@gmail.com",
+    "savansocialsp@gmail.com",
+}
+MANAGER_EMAILS = set(MANAGER_EMAILS).union(FALLBACK_MANAGER_EMAILS)
+TRUSTED_EMAILS = set(TRUSTED_EMAILS).union(FALLBACK_MANAGER_EMAILS)
 
 PREMIUM_PLANS = [
     {
