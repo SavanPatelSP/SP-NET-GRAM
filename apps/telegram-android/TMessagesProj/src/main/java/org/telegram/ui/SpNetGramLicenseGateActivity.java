@@ -269,7 +269,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         applyBackendOverride();
         String email = emailInput.getText().toString().trim().toLowerCase();
         String password = passwordInput.getText().toString().trim();
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+        if (TextUtils.isEmpty(email)) {
             updateStatus(LocaleController.getString(R.string.SpNetGramLicenseMissingFields), true);
             return;
         }

@@ -87,8 +87,8 @@ async function api(path, options = {}) {
 async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
-  if (!email || !password) {
-    setStatus(loginStatus, 'Enter email and password.', true);
+  if (!email) {
+    setStatus(loginStatus, 'Enter email.', true);
     return;
   }
   try {

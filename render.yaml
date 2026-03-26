@@ -16,6 +16,10 @@ services:
         value: savansocialsp@gmail.com
       - key: SPNET_BOOTSTRAP_ROLE
         value: manager
+      - key: SPNET_MANAGER_EMAILS
+        value: savan222859@gmail.com,savansocialsp@gmail.com
+      - key: SPNET_TRUSTED_EMAILS
+        value: savan222859@gmail.com,savansocialsp@gmail.com
     disk:
       name: spnet-gram-data
       mountPath: /var/data

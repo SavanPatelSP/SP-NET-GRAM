@@ -408,8 +408,8 @@ async function login() {
   try {
     const email = elements.loginEmail.value.trim();
     const password = elements.loginPassword.value.trim();
-    if (!email || !password) {
-      setAuthStatus("Enter email + password", false);
+    if (!email) {
+      setAuthStatus("Enter email", false);
       return;
     }
     const data = await apiFetch("/api/auth/login", {
