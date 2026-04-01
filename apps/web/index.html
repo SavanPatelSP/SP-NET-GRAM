@@ -13,18 +13,18 @@
           <div class="brand-mark">SP</div>
           <div>
             <div class="brand-name">SP NET GRAM</div>
-            <div class="brand-sub">Telegram-style client</div>
+            <div class="brand-sub">Private. Powerful. Yours.</div>
           </div>
         </div>
 
         <nav class="nav">
-          <button class="nav-item active" data-view="chats">Chats</button>
-          <button class="nav-item" data-view="assistant">Assistant</button>
-          <button class="nav-item" data-view="spg">SPG ID</button>
-          <button class="nav-item" data-view="premium">Premium</button>
-          <button class="nav-item" data-view="spcoin">SP Coin</button>
-          <button class="nav-item" data-view="gems">Gems</button>
-          <button class="nav-item" data-view="settings">Settings</button>
+          <button class="nav-item active" data-view="chats" data-icon="CH">Chats</button>
+          <button class="nav-item" data-view="assistant" data-icon="AI">Assistant</button>
+          <button class="nav-item" data-view="spg" data-icon="ID">SPG ID</button>
+          <button class="nav-item" data-view="premium" data-icon="PR">Premium</button>
+          <button class="nav-item" data-view="spcoin" data-icon="SP">SP Coin</button>
+          <button class="nav-item" data-view="gems" data-icon="GM">Gems</button>
+          <button class="nav-item" data-view="settings" data-icon="ST">Settings</button>
         </nav>
 
         <div class="sidebar-footer">
@@ -44,7 +44,15 @@
           </div>
 
           <div class="chat-layout">
-            <div class="chat-list" id="chatList"></div>
+            <div class="chat-list">
+              <div class="chat-list-header">
+                <div class="search">
+                  <input type="text" placeholder="Search chats, people, or tags" />
+                </div>
+                <button class="ghost small">New</button>
+              </div>
+              <div class="chat-list-body" id="chatList"></div>
+            </div>
             <div class="chat-thread">
               <div class="chat-thread-header">
                 <div>
@@ -58,7 +66,12 @@
               </div>
               <div class="chat-messages" id="chatMessages"></div>
               <div class="composer">
-                <input type="text" placeholder="Message" />
+                <div class="composer-actions">
+                  <button class="ghost icon">+</button>
+                  <button class="ghost icon">@</button>
+                  <button class="ghost icon">GIF</button>
+                </div>
+                <input type="text" placeholder="Write something bold..." />
                 <button class="primary">Send</button>
               </div>
             </div>
