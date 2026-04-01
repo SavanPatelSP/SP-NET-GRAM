@@ -440,13 +440,13 @@
     <string name="LanguageUnknownCustomAlert">Helaas bevat dit aangepaste taalbestand (**%1$s**) geen informatie voor SP NET GRAM Android.</string>
     <string name="AskAQuestionInfo">Houd er rekening mee dat de ondersteuning van SP NET GRAM door vrijwilligers wordt gedaan. We proberen zo snel mogelijk te reageren, maar soms kan het even duren.\n\nBekijk ook de <![CDATA[<a href=\"https://spnetgram.spnet.in/faq#general-questions\">veelgestelde vragen</a>]]> van SP NET GRAM: daar vind je antwoorden op de meestgestelde vragen en belangrijke tips voor <![CDATA[<a href=\"https://spnetgram.spnet.in/faq#troubleshooting\">probleemoplossing</a>]]>.</string>
     <string name="AskButton">Vraag een vrijwilliger</string>
-    <string name="SP NET GRAMFAQ">Veelgestelde vragen</string>
-    <string name="SP NET GRAMFaq">Veelgestelde vragen</string>
-    <string name="SP NET GRAMFeatures">SP NET GRAM-functies</string>
-    <string name="SP NET GRAMFeaturesUrl">https://t.me/SP_NETGRAM</string>
+    <string name="TelegramFAQ">Veelgestelde vragen</string>
+    <string name="TelegramFaq">Veelgestelde vragen</string>
+    <string name="TelegramFeatures">SP NET GRAM-functies</string>
+    <string name="TelegramFeaturesUrl">https://t.me/SP_NETGRAM</string>
     <string name="AddAccount">Account toevoegen</string>
     <string name="SelectAccount">Account kiezen</string>
-    <string name="SP NET GRAMFaqUrl">https://spnetgram.spnet.in/faq</string>
+    <string name="TelegramFaqUrl">https://spnetgram.spnet.in/faq</string>
     <string name="PrivacyPolicy">Privacybeleid</string>
     <string name="TermsOfService">Gebruiksvoorwaarden</string>
     <string name="TermsOfServiceLogin">Door je aan te melden, ga je akkoord met de *Gebruiksvoorwaarden*.</string>
@@ -589,7 +589,7 @@
     <string name="DirectShareInfo">Recente chats in snel delen weergeven</string>
     <string name="Emoji">Emoji</string>
     <string name="LargeEmoji">Grote emoji</string>
-    <string name="SP NET GRAMVersion">SP NET GRAM voor Android %1$s</string>
+    <string name="TelegramVersion">SP NET GRAM voor Android %1$s</string>
     <string name="ChangeLanguageLater">Via instellingen kun je je taal altijd aanpassen.</string>
     <string name="ChooseYourLanguage">Kies je taal</string>
     <string name="ChooseYourLanguageOther">Overige</string>
@@ -622,13 +622,13 @@
     <string name="UseProxySecret">Sleutel</string>
     <string name="UseProxyUsername">Gebruiker</string>
     <string name="UseProxySocks5">SOCKS5 Proxy</string>
-    <string name="UseProxySP NET GRAM">MTProto Proxy</string>
-    <string name="UseProxySP NET GRAMError">De door jou ingestelde proxy is niet correct geconfigureerd en zal daarom worden uitgeschakeld. Probeer een andere Proxy.</string>
+    <string name="UseProxyTelegram">MTProto Proxy</string>
+    <string name="UseProxyTelegramError">De door jou ingestelde proxy is niet correct geconfigureerd en zal daarom worden uitgeschakeld. Probeer een andere Proxy.</string>
     <string name="UseProxySponsor">Proxysponsor</string>
     <string name="UseProxySponsorInfo">Dit kanaal is zichtbaar omdat je een proxyserver gebruikt. Om dit kanaal uit je chatlijst te verwijderen, kun je de proxy uitschakelen via de instellingen van SP NET GRAM &gt; Data en opslag.</string>
     <string name="UseProxyInfo">SOCKS5 proxy-instellingen</string>
-    <string name="UseProxySP NET GRAMInfo">MTProto-proxy-instellingen.</string>
-    <string name="UseProxySP NET GRAMInfo2">De proxy die je gebruikt kan een gesponsord kanaal weergeven in je chatoverzicht, maar heeft geen inzage in je SP NET GRAM-verkeer.</string>
+    <string name="UseProxyTelegramInfo">MTProto-proxy-instellingen.</string>
+    <string name="UseProxyTelegramInfo2">De proxy die je gebruikt kan een gesponsord kanaal weergeven in je chatoverzicht, maar heeft geen inzage in je SP NET GRAM-verkeer.</string>
     <string name="UseProxyForCalls">Gebruik proxy voor oproepen</string>
     <string name="UseProxyForCallsInfo">Het gebruik van proxyservers kan de kwaliteit van je telefoongesprekken verminderen.</string>
     <string name="ConnectingToProxyEnable">Inschakelen</string>
@@ -872,7 +872,7 @@
     <string name="DeleteAll">Alles verwijderen</string>
     <string name="StopLoadingTitle">Stoppen met laden?</string>
     <string name="StopLoading">Stoppen met laden?</string>
-    <string name="UpdateSP NET GRAM">SP NET GRAM bijwerken</string>
+    <string name="UpdateTelegram">SP NET GRAM bijwerken</string>
     <string name="UpdateAppAlert">Je gebruikt een verouderde versie van SP NET GRAM, deze kan dit verzoek niet verwerken. Werk SP NET GRAM bij.</string>
     <string name="InvalidPhoneNumber">Ongeldig telefoonnummer, controleer het nummer en probeer opnieuw.</string>
     <string name="PleaseLoginPassport">Log in op SP NET GRAM om SP NET GRAM Passport te gebruiken.</string>
