@@ -1,6 +1,7 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -20,7 +21,6 @@ import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 
@@ -66,6 +66,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
+        SpNetGramUi.applyActionBar(actionBar);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle(LocaleController.getString(R.string.SpNetGramLicenseGateTitle));
         if (!lockMode) {
@@ -83,7 +84,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         }
 
         FrameLayout frameLayout = new FrameLayout(context);
-        frameLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        frameLayout.setBackgroundColor(SpNetGramUi.COLOR_BG);
 
         ScrollView scrollView = new ScrollView(context);
         scrollView.setFillViewport(true);
@@ -94,14 +95,14 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
 
         TextView subtitle = new TextView(context);
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        subtitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        subtitle.setTextColor(SpNetGramUi.COLOR_MUTED);
         subtitle.setLineSpacing(AndroidUtilities.dp(3), 1.0f);
         subtitle.setText(LocaleController.getString(R.string.SpNetGramLicenseGateSubtitle));
         container.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         statusView = new TextView(context);
         statusView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        statusView.setTextColor(SpNetGramUi.COLOR_MUTED);
         statusView.setPadding(0, AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10));
         statusView.setText(LocaleController.getString(R.string.SpNetGramLicenseChecking));
         container.addView(statusView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
@@ -186,7 +187,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         TextView view = new TextView(context);
         view.setText(text);
         view.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        view.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        view.setTextColor(SpNetGramUi.COLOR_ACCENT_2);
         view.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         view.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(4));
         return view;
@@ -195,23 +196,23 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
     private LinearLayout createCard(Context context) {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(AndroidUtilities.dp(12), AndroidUtilities.dp(4), AndroidUtilities.dp(12), AndroidUtilities.dp(4));
-        card.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(12), Theme.getColor(Theme.key_windowBackgroundWhite), Theme.getColor(Theme.key_windowBackgroundWhite)));
+        card.setPadding(AndroidUtilities.dp(14), AndroidUtilities.dp(6), AndroidUtilities.dp(14), AndroidUtilities.dp(6));
+        card.setBackground(SpNetGramUi.createCardBackground(16, false));
         return card;
     }
 
     private EditTextBoldCursor createInput(Context context, CharSequence hint, int inputType) {
         EditTextBoldCursor input = new EditTextBoldCursor(context);
         input.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        input.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
-        input.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        input.setHintTextColor(SpNetGramUi.COLOR_MUTED);
+        input.setTextColor(SpNetGramUi.COLOR_TEXT);
         input.setBackgroundDrawable(null);
         input.setPadding(0, AndroidUtilities.dp(6), 0, AndroidUtilities.dp(6));
         input.setSingleLine(true);
         input.setInputType(inputType);
         input.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
         input.setHint(hint);
-        input.setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        input.setCursorColor(SpNetGramUi.COLOR_ACCENT_2);
         input.setCursorSize(AndroidUtilities.dp(20));
         input.setCursorWidth(1.5f);
         return input;
@@ -222,10 +223,10 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         button.setText(text);
         button.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         button.setGravity(Gravity.CENTER);
-        button.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        button.setTextColor(SpNetGramUi.COLOR_BG);
         button.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(12), AndroidUtilities.dp(16), AndroidUtilities.dp(12));
-        int color = Theme.getColor(Theme.key_windowBackgroundWhiteBlueButton);
-        button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(8), color, color));
+        Drawable bg = SpNetGramUi.createPrimaryButtonBackground(context);
+        button.setBackground(bg);
         button.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         return button;
     }
@@ -235,10 +236,9 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         button.setText(text);
         button.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         button.setGravity(Gravity.CENTER);
-        button.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+        button.setTextColor(SpNetGramUi.COLOR_ACCENT_2);
         button.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(10), AndroidUtilities.dp(16), AndroidUtilities.dp(10));
-        int color = Theme.getColor(Theme.key_windowBackgroundWhite);
-        button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(8), color, color));
+        button.setBackground(SpNetGramUi.createOutlineButtonBackground(14, SpNetGramUi.COLOR_STROKE));
         button.setLayoutParams(LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         return button;
     }
@@ -248,7 +248,7 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
             return;
         }
         statusView.setText(text);
-        int color = error ? Theme.getColor(Theme.key_text_RedBold) : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
+        int color = error ? SpNetGramUi.COLOR_DANGER : SpNetGramUi.COLOR_ACCENT_2;
         statusView.setTextColor(color);
     }
 

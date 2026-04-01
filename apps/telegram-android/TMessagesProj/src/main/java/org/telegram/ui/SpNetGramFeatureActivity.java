@@ -2,10 +2,10 @@ package org.telegram.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -19,7 +19,6 @@ import org.telegram.messenger.SpNetGramApi;
 import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class SpNetGramFeatureActivity extends BaseFragment {
@@ -49,6 +48,7 @@ public class SpNetGramFeatureActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
+        SpNetGramUi.applyActionBar(actionBar);
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle(getTitleForFeature());
@@ -61,8 +61,12 @@ public class SpNetGramFeatureActivity extends BaseFragment {
             }
         });
 
+        FrameLayout root = new FrameLayout(context);
+        root.setBackgroundColor(SpNetGramUi.COLOR_BG);
+
         ScrollView scrollView = new ScrollView(context);
         scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(SpNetGramUi.COLOR_BG);
 
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
@@ -70,15 +74,20 @@ public class SpNetGramFeatureActivity extends BaseFragment {
 
         TextView description = new TextView(context);
         description.setTextSize(15);
-        description.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        description.setTextColor(SpNetGramUi.COLOR_MUTED);
         description.setLineSpacing(AndroidUtilities.dp(4), 1.0f);
         description.setText(getDescriptionForFeature());
-        container.addView(description, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        LinearLayout hero = createCard(context, true);
+        hero.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), AndroidUtilities.dp(16), AndroidUtilities.dp(14));
+        hero.addView(description, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        container.addView(hero, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 12));
 
         addFeatureContent(context, container);
 
         scrollView.addView(container, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
-        fragmentView = scrollView;
+        root.addView(scrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        fragmentView = root;
         return fragmentView;
     }
 
@@ -185,9 +194,10 @@ public class SpNetGramFeatureActivity extends BaseFragment {
     private TextView createStatusText(Context context, CharSequence text) {
         TextView view = new TextView(context);
         view.setTextSize(15);
-        view.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        view.setTextColor(SpNetGramUi.COLOR_MUTED);
         view.setLineSpacing(AndroidUtilities.dp(3), 1.0f);
-        view.setPadding(0, AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12));
+        view.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), AndroidUtilities.dp(16), AndroidUtilities.dp(14));
+        view.setBackground(SpNetGramUi.createCardBackground(16, false));
         view.setText(text);
         return view;
     }
@@ -195,9 +205,10 @@ public class SpNetGramFeatureActivity extends BaseFragment {
     private TextView createBodyText(Context context, CharSequence text) {
         TextView view = new TextView(context);
         view.setTextSize(14);
-        view.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        view.setTextColor(SpNetGramUi.COLOR_TEXT);
         view.setLineSpacing(AndroidUtilities.dp(3), 1.0f);
-        view.setPadding(0, AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12));
+        view.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(14), AndroidUtilities.dp(16), AndroidUtilities.dp(14));
+        view.setBackground(SpNetGramUi.createCardBackground(16, true));
         view.setText(text);
         return view;
     }
@@ -207,14 +218,20 @@ public class SpNetGramFeatureActivity extends BaseFragment {
         button.setText(text);
         button.setTextSize(15);
         button.setGravity(Gravity.CENTER);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(SpNetGramUi.COLOR_BG);
         button.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(12), AndroidUtilities.dp(16), AndroidUtilities.dp(12));
-        int color = Theme.getColor(Theme.key_windowBackgroundWhiteBlueButton);
-        button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(8), color, color));
+        button.setBackground(SpNetGramUi.createPrimaryButtonBackground(context));
         LinearLayout.LayoutParams params = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT);
         params.topMargin = AndroidUtilities.dp(8);
         button.setLayoutParams(params);
         return button;
+    }
+
+    private LinearLayout createCard(Context context, boolean alt) {
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackground(SpNetGramUi.createCardBackground(18, alt));
+        return card;
     }
 
     private boolean ensureSignedIn() {
@@ -229,7 +246,7 @@ public class SpNetGramFeatureActivity extends BaseFragment {
     private void setStatus(TextView view, CharSequence text, boolean error) {
         if (view == null) return;
         view.setText(text);
-        int color = error ? Theme.getColor(Theme.key_text_RedBold) : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
+        int color = error ? SpNetGramUi.COLOR_DANGER : SpNetGramUi.COLOR_ACCENT_2;
         view.setTextColor(color);
     }
 

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SpNetGramApi;
@@ -70,6 +71,35 @@ public class SpNetGramSettingsActivity extends BaseFragment {
     private int accessState = ACCESS_UNKNOWN;
     private String accessValueText = null;
 
+    private final Theme.ResourcesProvider spnetResources = key -> {
+        if (key == Theme.key_windowBackgroundGray) {
+            return SpNetGramUi.COLOR_BG;
+        } else if (key == Theme.key_windowBackgroundWhite) {
+            return SpNetGramUi.COLOR_SURFACE;
+        } else if (key == Theme.key_windowBackgroundWhiteBlackText) {
+            return SpNetGramUi.COLOR_TEXT;
+        } else if (key == Theme.key_windowBackgroundWhiteGrayText || key == Theme.key_windowBackgroundWhiteGrayText2) {
+            return SpNetGramUi.COLOR_MUTED;
+        } else if (key == Theme.key_windowBackgroundWhiteBlueText) {
+            return SpNetGramUi.COLOR_ACCENT_2;
+        } else if (key == Theme.key_windowBackgroundWhiteValueText) {
+            return SpNetGramUi.COLOR_GOLD;
+        } else if (key == Theme.key_windowBackgroundWhiteBlueHeader) {
+            return SpNetGramUi.COLOR_ACCENT;
+        } else if (key == Theme.key_windowBackgroundWhiteGrayIcon) {
+            return SpNetGramUi.COLOR_MUTED;
+        } else if (key == Theme.key_windowBackgroundWhiteLinkText) {
+            return SpNetGramUi.COLOR_ACCENT_2;
+        } else if (key == Theme.key_switchTrack || key == Theme.key_switchTrackChecked ||
+                key == Theme.key_switch2Track || key == Theme.key_switch2TrackChecked) {
+            return SpNetGramUi.COLOR_ACCENT;
+        } else if (key == Theme.key_switchThumb || key == Theme.key_switchThumbChecked ||
+                key == Theme.key_switch2Thumb || key == Theme.key_switch2ThumbChecked) {
+            return SpNetGramUi.COLOR_GOLD;
+        }
+        return Theme.getColor(key);
+    };
+
     @Override
     public boolean onFragmentCreate() {
         return super.onFragmentCreate();
@@ -83,6 +113,7 @@ public class SpNetGramSettingsActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
+        SpNetGramUi.applyActionBar(actionBar);
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle(LocaleController.getString(R.string.SpNetGramSettings));
@@ -97,7 +128,7 @@ public class SpNetGramSettingsActivity extends BaseFragment {
 
         fragmentView = new FrameLayout(context);
         FrameLayout frameLayout = (FrameLayout) fragmentView;
-        frameLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        frameLayout.setBackgroundColor(SpNetGramUi.COLOR_BG);
 
         listView = new RecyclerListView(context);
         listView.setSections();
@@ -111,6 +142,9 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         listView.setVerticalScrollBarEnabled(false);
         listView.setLayoutAnimation(null);
         listView.setAdapter(adapter = new ListAdapter());
+        listView.setBackgroundColor(SpNetGramUi.COLOR_BG);
+        listView.setClipToPadding(false);
+        listView.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(16));
         DefaultItemAnimator itemAnimator = new DefaultItemAnimator();
         itemAnimator.setDurations(350);
         itemAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
@@ -332,13 +366,16 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view;
             if (viewType == VIEW_TYPE_HEADER) {
-                view = new HeaderCell(getContext());
+                view = new HeaderCell(getContext(), spnetResources);
             } else if (viewType == VIEW_TYPE_TEXT) {
-                view = new TextSettingsCell(getContext());
+                view = new TextSettingsCell(getContext(), spnetResources);
             } else if (viewType == VIEW_TYPE_CHECK) {
-                view = new TextCheckCell(getContext());
+                view = new TextCheckCell(getContext(), spnetResources);
             } else {
-                view = new TextInfoPrivacyCell(getContext());
+                view = new TextInfoPrivacyCell(getContext(), spnetResources);
+            }
+            if (viewType == VIEW_TYPE_TEXT || viewType == VIEW_TYPE_CHECK) {
+                view.setBackground(SpNetGramUi.createCardBackground(14, true));
             }
             return new RecyclerListView.Holder(view);
         }
