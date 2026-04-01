@@ -30,6 +30,15 @@ public final class SpNetGramConfig {
     public static final String KEY_BACKEND_TOKEN = "backend_token";
     public static final String KEY_BACKEND_EMAIL = "backend_email";
     public static final String KEY_BACKEND_BASE = "backend_base";
+    public static final String KEY_ASSISTANT_CONTEXT = "assistant_context";
+    public static final String KEY_DRAWER_STYLE = "drawer_style";
+    public static final String KEY_APP_TITLE_STYLE = "app_title_style";
+    public static final String KEY_FOLDER_STYLE = "folder_style";
+    public static final String KEY_CENTER_CHAT = "center_chat";
+    public static final String KEY_COMPACT_LIST = "compact_list";
+    public static final String KEY_CAMERA_X = "camera_x";
+    public static final String KEY_CAMERA_FLASH = "camera_flash";
+    public static final String KEY_CAMERA_ULTRAWIDE = "camera_ultrawide";
 
     public static final String BACKEND_URL = "https://spnet-gram-backend.onrender.com";
 
@@ -133,6 +142,70 @@ public final class SpNetGramConfig {
         prefs().edit().putBoolean(KEY_ENABLE_CHAT_LOCKS, enabled).apply();
     }
 
+    public static int getDrawerStyle() {
+        return prefs().getInt(KEY_DRAWER_STYLE, 0);
+    }
+
+    public static void setDrawerStyle(int style) {
+        prefs().edit().putInt(KEY_DRAWER_STYLE, style).apply();
+    }
+
+    public static int getAppTitleStyle() {
+        return prefs().getInt(KEY_APP_TITLE_STYLE, 0);
+    }
+
+    public static void setAppTitleStyle(int style) {
+        prefs().edit().putInt(KEY_APP_TITLE_STYLE, style).apply();
+    }
+
+    public static int getFolderStyle() {
+        return prefs().getInt(KEY_FOLDER_STYLE, 0);
+    }
+
+    public static void setFolderStyle(int style) {
+        prefs().edit().putInt(KEY_FOLDER_STYLE, style).apply();
+    }
+
+    public static boolean isCenterChatEnabled() {
+        return prefs().getBoolean(KEY_CENTER_CHAT, false);
+    }
+
+    public static void setCenterChatEnabled(boolean enabled) {
+        prefs().edit().putBoolean(KEY_CENTER_CHAT, enabled).apply();
+    }
+
+    public static boolean isCompactListEnabled() {
+        return prefs().getBoolean(KEY_COMPACT_LIST, false);
+    }
+
+    public static void setCompactListEnabled(boolean enabled) {
+        prefs().edit().putBoolean(KEY_COMPACT_LIST, enabled).apply();
+    }
+
+    public static boolean isCameraXEnabled() {
+        return prefs().getBoolean(KEY_CAMERA_X, true);
+    }
+
+    public static void setCameraXEnabled(boolean enabled) {
+        prefs().edit().putBoolean(KEY_CAMERA_X, enabled).apply();
+    }
+
+    public static boolean isCameraFlashEnabled() {
+        return prefs().getBoolean(KEY_CAMERA_FLASH, true);
+    }
+
+    public static void setCameraFlashEnabled(boolean enabled) {
+        prefs().edit().putBoolean(KEY_CAMERA_FLASH, enabled).apply();
+    }
+
+    public static boolean isCameraUltrawideEnabled() {
+        return prefs().getBoolean(KEY_CAMERA_ULTRAWIDE, false);
+    }
+
+    public static void setCameraUltrawideEnabled(boolean enabled) {
+        prefs().edit().putBoolean(KEY_CAMERA_ULTRAWIDE, enabled).apply();
+    }
+
     public static String getBackendToken() {
         return prefs().getString(KEY_BACKEND_TOKEN, "");
     }
@@ -159,6 +232,14 @@ public final class SpNetGramConfig {
             return BACKEND_URL;
         }
         return value.trim();
+    }
+
+    public static String getAssistantContext() {
+        return prefs().getString(KEY_ASSISTANT_CONTEXT, "");
+    }
+
+    public static void setAssistantContext(String value) {
+        prefs().edit().putString(KEY_ASSISTANT_CONTEXT, value == null ? "" : value).apply();
     }
 
     public static void setBackendBase(String base) {

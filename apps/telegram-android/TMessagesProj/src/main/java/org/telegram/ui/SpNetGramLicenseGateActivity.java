@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SpNetGramApi;
@@ -106,6 +107,31 @@ public class SpNetGramLicenseGateActivity extends BaseFragment {
         statusView.setPadding(0, AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10));
         statusView.setText(LocaleController.getString(R.string.SpNetGramLicenseChecking));
         container.addView(statusView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        if (BuildVars.DEBUG_VERSION) {
+            TextView previewTitle = createSectionTitle(context, "Preview (Debug)");
+            container.addView(previewTitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+
+            TextView previewAssistant = createSecondaryButton(context, "Preview Assistant");
+            previewAssistant.setOnClickListener(v -> presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_ASSISTANT)));
+            container.addView(previewAssistant, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+
+            TextView previewPremium = createSecondaryButton(context, "Preview Premium");
+            previewPremium.setOnClickListener(v -> presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_PREMIUM)));
+            container.addView(previewPremium, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+
+            TextView previewCoin = createSecondaryButton(context, "Preview SP Coin");
+            previewCoin.setOnClickListener(v -> presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_SP_COIN)));
+            container.addView(previewCoin, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+
+            TextView previewGems = createSecondaryButton(context, "Preview Gems");
+            previewGems.setOnClickListener(v -> presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_GEMS)));
+            container.addView(previewGems, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+
+            TextView previewSettings = createSecondaryButton(context, "Preview Settings");
+            previewSettings.setOnClickListener(v -> presentFragment(new SpNetGramSettingsActivity()));
+            container.addView(previewSettings, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
+        }
 
         TextView accountTitle = createSectionTitle(context, LocaleController.getString(R.string.SpNetGramLicenseAccountTitle));
         container.addView(accountTitle);

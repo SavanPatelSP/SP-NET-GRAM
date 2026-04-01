@@ -21,7 +21,7 @@ public class SpNetGramChatQuickActionsBar extends FrameLayout {
     private final LinearLayout row;
     private final TextView ghostLabel;
 
-    public SpNetGramChatQuickActionsBar(@NonNull Context context, Runnable onTranslate, Runnable onAssistant, Runnable onGhostToggle, Runnable onOpenLabs) {
+    public SpNetGramChatQuickActionsBar(@NonNull Context context, Runnable onTranslate, Runnable onAssistant, Runnable onInstantForward, Runnable onGhostToggle, Runnable onOpenLabs) {
         super(context);
 
         GradientDrawable bg = new GradientDrawable();
@@ -37,6 +37,7 @@ public class SpNetGramChatQuickActionsBar extends FrameLayout {
 
         row.addView(buildAction(R.drawable.msg_translate, LocaleController.getString(R.string.TranslateMessage), onTranslate));
         row.addView(buildAction(R.drawable.msg_bot, LocaleController.getString(R.string.SpNetGramAssistant), onAssistant));
+        row.addView(buildAction(R.drawable.msg_forward, LocaleController.getString(R.string.SpNetGramInstantForward), onInstantForward));
 
         LinearLayout ghostButton = buildAction(R.drawable.msg_secret, LocaleController.getString(R.string.SpNetGramGhostMode), onGhostToggle);
         ghostLabel = (TextView) ghostButton.getChildAt(1);

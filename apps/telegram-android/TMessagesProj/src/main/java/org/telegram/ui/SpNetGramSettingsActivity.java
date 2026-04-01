@@ -3,7 +3,13 @@ package org.telegram.ui;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Gravity;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.util.TypedValue;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -13,13 +19,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SpNetGramApi;
-import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Cells.HeaderCell;
-import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.CubicBezierInterpolator;
@@ -35,67 +38,70 @@ public class SpNetGramSettingsActivity extends BaseFragment {
     private RecyclerListView listView;
     private ListAdapter adapter;
 
+    private static final int COLOR_BG = 0xFF151515;
+    private static final int COLOR_CELL = 0xFF1D1D1D;
+    private static final int COLOR_TEXT = 0xFFEDEDED;
+    private static final int COLOR_MUTED = 0xFF9AA0A6;
+    private static final int COLOR_HEADER = 0xFF4FB1FF;
+    private static final int COLOR_ICON = 0xFF9AA0A6;
+    private static final int COLOR_DIVIDER = 0xFF242424;
+    private static final int COLOR_SELECTOR = 0x224FB1FF;
+    private static final int COLOR_DANGER = 0xFFE85A5A;
+
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_TEXT = 1;
-    private static final int VIEW_TYPE_CHECK = 2;
     private static final int VIEW_TYPE_INFO = 3;
+    private static final int VIEW_TYPE_DETAIL = 4;
 
-    private static final int ID_ACCESS_STATUS = 0;
-    private static final int ID_ASSISTANT = 1;
-    private static final int ID_SPG_ID = 2;
-    private static final int ID_PREMIUM = 3;
-    private static final int ID_SP_COIN = 4;
-    private static final int ID_GEMS = 5;
-    private static final int ID_REDEEM_LICENSE = 6;
-
-    private static final int ID_GHOST = 10;
-    private static final int ID_ANTI_REVOKE = 11;
-    private static final int ID_HIDE_TYPING = 12;
-    private static final int ID_NO_READ = 13;
-    private static final int ID_QUICK_ACTIONS = 20;
-    private static final int ID_TRANSLATE_BAR = 21;
-    private static final int ID_EDIT_HISTORY = 22;
-    private static final int ID_SPAM_FILTER = 23;
-    private static final int ID_HIDE_SPONSORED = 24;
-    private static final int ID_UI_REDESIGN = 25;
-    private static final int ID_ENABLE_HIDDEN = 26;
-    private static final int ID_ENABLE_LOCKS = 27;
-    private static final int ID_MANAGE_HIDDEN = 30;
+    private static final int ID_GENERAL = 1;
+    private static final int ID_APPEARANCE = 2;
+    private static final int ID_CHATS = 3;
+    private static final int ID_PRIVACY = 4;
+    private static final int ID_WALLET = 5;
+    private static final int ID_CAMERA = 6;
+    private static final int ID_EXPERIMENTAL = 7;
+    private static final int ID_UPDATES = 8;
+    private static final int ID_OFFICIAL_CHANNEL = 10;
+    private static final int ID_OFFICIAL_GROUP = 11;
+    private static final int ID_SOURCE_CODE = 12;
+    private static final int ID_TRANSLATE = 13;
+    private static final int ID_DONATE = 14;
+    private static final int ID_COPY_REPORT = 15;
 
     private final ArrayList<ItemInner> oldItems = new ArrayList<>();
     private final ArrayList<ItemInner> items = new ArrayList<>();
 
-    private static final int ACCESS_UNKNOWN = 0;
-    private static final int ACCESS_ACTIVE = 1;
-    private static final int ACCESS_LOCKED = 2;
-    private int accessState = ACCESS_UNKNOWN;
-    private String accessValueText = null;
-
     private final Theme.ResourcesProvider spnetResources = key -> {
         if (key == Theme.key_windowBackgroundGray) {
-            return SpNetGramUi.COLOR_BG;
+            return COLOR_BG;
         } else if (key == Theme.key_windowBackgroundWhite) {
-            return SpNetGramUi.COLOR_SURFACE;
+            return COLOR_CELL;
         } else if (key == Theme.key_windowBackgroundWhiteBlackText) {
-            return SpNetGramUi.COLOR_TEXT;
+            return COLOR_TEXT;
         } else if (key == Theme.key_windowBackgroundWhiteGrayText || key == Theme.key_windowBackgroundWhiteGrayText2) {
-            return SpNetGramUi.COLOR_MUTED;
+            return COLOR_MUTED;
         } else if (key == Theme.key_windowBackgroundWhiteBlueText) {
-            return SpNetGramUi.COLOR_ACCENT_2;
+            return COLOR_HEADER;
         } else if (key == Theme.key_windowBackgroundWhiteValueText) {
-            return SpNetGramUi.COLOR_GOLD;
+            return COLOR_HEADER;
         } else if (key == Theme.key_windowBackgroundWhiteBlueHeader) {
-            return SpNetGramUi.COLOR_ACCENT;
+            return COLOR_HEADER;
         } else if (key == Theme.key_windowBackgroundWhiteGrayIcon) {
-            return SpNetGramUi.COLOR_MUTED;
+            return COLOR_ICON;
         } else if (key == Theme.key_windowBackgroundWhiteLinkText) {
-            return SpNetGramUi.COLOR_ACCENT_2;
+            return COLOR_HEADER;
+        } else if (key == Theme.key_listSelector || key == Theme.key_settings_listSelector) {
+            return COLOR_SELECTOR;
+        } else if (key == Theme.key_divider) {
+            return COLOR_DIVIDER;
+        } else if (key == Theme.key_text_RedBold) {
+            return COLOR_DANGER;
         } else if (key == Theme.key_switchTrack || key == Theme.key_switchTrackChecked ||
                 key == Theme.key_switch2Track || key == Theme.key_switch2TrackChecked) {
-            return SpNetGramUi.COLOR_ACCENT;
-        } else if (key == Theme.key_switchThumb || key == Theme.key_switchThumbChecked ||
-                key == Theme.key_switch2Thumb || key == Theme.key_switch2ThumbChecked) {
-            return SpNetGramUi.COLOR_GOLD;
+            return COLOR_HEADER;
+        } else if (key == Theme.key_switchTrackBlue || key == Theme.key_switchTrackBlueChecked ||
+                key == Theme.key_switchTrackBlueThumb || key == Theme.key_switchTrackBlueThumbChecked) {
+            return COLOR_HEADER;
         }
         return Theme.getColor(key);
     };
@@ -106,14 +112,13 @@ public class SpNetGramSettingsActivity extends BaseFragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        refreshAccessStatus();
-    }
-
-    @Override
     public View createView(Context context) {
-        SpNetGramUi.applyActionBar(actionBar);
+        if (actionBar != null) {
+            actionBar.setBackgroundColor(COLOR_BG);
+            actionBar.setTitleColor(COLOR_TEXT);
+            actionBar.setItemsColor(COLOR_TEXT, false);
+            actionBar.setItemsBackgroundColor(0x22FFFFFF, false);
+        }
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle(LocaleController.getString(R.string.SpNetGramSettings));
@@ -128,7 +133,7 @@ public class SpNetGramSettingsActivity extends BaseFragment {
 
         fragmentView = new FrameLayout(context);
         FrameLayout frameLayout = (FrameLayout) fragmentView;
-        frameLayout.setBackgroundColor(SpNetGramUi.COLOR_BG);
+        frameLayout.setBackgroundColor(COLOR_BG);
 
         listView = new RecyclerListView(context);
         listView.setSections();
@@ -142,9 +147,9 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         listView.setVerticalScrollBarEnabled(false);
         listView.setLayoutAnimation(null);
         listView.setAdapter(adapter = new ListAdapter());
-        listView.setBackgroundColor(SpNetGramUi.COLOR_BG);
+        listView.setBackgroundColor(COLOR_BG);
         listView.setClipToPadding(false);
-        listView.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(16));
+        listView.setPadding(0, 0, 0, AndroidUtilities.dp(8));
         DefaultItemAnimator itemAnimator = new DefaultItemAnimator();
         itemAnimator.setDurations(350);
         itemAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
@@ -158,100 +163,58 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 return;
             }
             ItemInner item = items.get(position);
-            if (item.viewType == VIEW_TYPE_TEXT) {
+            if (item.viewType == VIEW_TYPE_TEXT || item.viewType == VIEW_TYPE_DETAIL) {
                 switch (item.id) {
-                    case ID_ACCESS_STATUS:
-                        presentFragment(new SpNetGramLicenseGateActivity(false));
+                    case ID_GENERAL:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_GENERAL));
                         break;
-                    case ID_ASSISTANT:
-                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_ASSISTANT));
+                    case ID_APPEARANCE:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_APPEARANCE));
                         break;
-                    case ID_SPG_ID:
-                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_SPG_ID));
+                    case ID_CHATS:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_CHATS));
                         break;
-                    case ID_PREMIUM:
-                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_PREMIUM));
+                    case ID_PRIVACY:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_PRIVACY));
                         break;
-                    case ID_SP_COIN:
-                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_SP_COIN));
+                    case ID_WALLET:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_WALLET));
                         break;
-                    case ID_GEMS:
-                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_GEMS));
+                    case ID_CAMERA:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_CAMERA));
                         break;
-                    case ID_REDEEM_LICENSE:
-                        presentFragment(new SpNetGramLicenseGateActivity(false));
+                    case ID_EXPERIMENTAL:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_EXPERIMENTAL));
                         break;
-                    case ID_MANAGE_HIDDEN:
-                        presentFragment(new SpNetGramHiddenChatsActivity());
+                    case ID_UPDATES:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_UPDATES));
+                        break;
+                    case ID_OFFICIAL_CHANNEL:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_OFFICIAL_CHANNEL));
+                        break;
+                    case ID_OFFICIAL_GROUP:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_OFFICIAL_GROUP));
+                        break;
+                    case ID_SOURCE_CODE:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_SOURCE_CODE));
+                        break;
+                    case ID_TRANSLATE:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_TRANSLATE));
+                        break;
+                    case ID_DONATE:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_DONATE));
+                        break;
+                    case ID_COPY_REPORT:
+                        presentFragment(new SpNetGramFeatureActivity(SpNetGramFeatureActivity.FEATURE_COPY_REPORT));
                         break;
                 }
                 return;
             }
-            if (item.viewType == VIEW_TYPE_CHECK && view instanceof TextCheckCell) {
-                TextCheckCell cell = (TextCheckCell) view;
-                boolean newValue = !cell.getCheckBox().isChecked();
-                cell.getCheckBox().setChecked(newValue, true);
-                if (item.id == ID_GHOST) {
-                    SpNetGramConfig.setGhostMode(newValue);
-                } else if (item.id == ID_ANTI_REVOKE) {
-                    SpNetGramConfig.setAntiRevokeEnabled(newValue);
-                } else if (item.id == ID_HIDE_TYPING) {
-                    SpNetGramConfig.setHideTypingEnabled(newValue);
-                } else if (item.id == ID_NO_READ) {
-                    SpNetGramConfig.setNoReadReceiptsEnabled(newValue);
-                } else if (item.id == ID_QUICK_ACTIONS) {
-                    SpNetGramConfig.setQuickActionsEnabled(newValue);
-                } else if (item.id == ID_TRANSLATE_BAR) {
-                    SpNetGramConfig.setTranslateBarEnabled(newValue);
-                } else if (item.id == ID_EDIT_HISTORY) {
-                    SpNetGramConfig.setEditHistoryEnabled(newValue);
-                } else if (item.id == ID_SPAM_FILTER) {
-                    SpNetGramConfig.setSpamFilterEnabled(newValue);
-                } else if (item.id == ID_HIDE_SPONSORED) {
-                    SpNetGramConfig.setHideSponsoredEnabled(newValue);
-                } else if (item.id == ID_UI_REDESIGN) {
-                    SpNetGramConfig.setUiRedesignEnabled(newValue);
-                } else if (item.id == ID_ENABLE_HIDDEN) {
-                    SpNetGramConfig.setHiddenChatsEnabled(newValue);
-                } else if (item.id == ID_ENABLE_LOCKS) {
-                    SpNetGramConfig.setChatLocksEnabled(newValue);
-                }
-            }
         });
 
         updateItems(false);
-        refreshAccessStatus();
 
         return fragmentView;
-    }
-
-    private boolean isToggleEnabled(int id) {
-        if (id == ID_GHOST) {
-            return SpNetGramConfig.isGhostMode();
-        } else if (id == ID_ANTI_REVOKE) {
-            return SpNetGramConfig.isAntiRevokeEnabled();
-        } else if (id == ID_HIDE_TYPING) {
-            return SpNetGramConfig.isHideTypingEnabled();
-        } else if (id == ID_NO_READ) {
-            return SpNetGramConfig.isNoReadReceiptsEnabled();
-        } else if (id == ID_QUICK_ACTIONS) {
-            return SpNetGramConfig.isQuickActionsEnabled();
-        } else if (id == ID_TRANSLATE_BAR) {
-            return SpNetGramConfig.isTranslateBarEnabled();
-        } else if (id == ID_EDIT_HISTORY) {
-            return SpNetGramConfig.isEditHistoryEnabled();
-        } else if (id == ID_SPAM_FILTER) {
-            return SpNetGramConfig.isSpamFilterEnabled();
-        } else if (id == ID_HIDE_SPONSORED) {
-            return SpNetGramConfig.isHideSponsoredEnabled();
-        } else if (id == ID_UI_REDESIGN) {
-            return SpNetGramConfig.isUiRedesignEnabled();
-        } else if (id == ID_ENABLE_HIDDEN) {
-            return SpNetGramConfig.isHiddenChatsEnabled();
-        } else if (id == ID_ENABLE_LOCKS) {
-            return SpNetGramConfig.isChatLocksEnabled();
-        }
-        return false;
     }
 
     private void updateItems(boolean animated) {
@@ -259,47 +222,23 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         oldItems.addAll(items);
         items.clear();
 
-        if (accessValueText == null) {
-            accessValueText = LocaleController.getString(R.string.SpNetGramAccessUnknown);
-        }
-
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_ACCESS_STATUS, LocaleController.getString(R.string.SpNetGramAccess), accessValueText));
         items.add(new ItemInner(VIEW_TYPE_HEADER, 0, LocaleController.getString(R.string.SpNetGramSectionTitle)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_ASSISTANT, LocaleController.getString(R.string.SpNetGramAssistant)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SPG_ID, LocaleController.getString(R.string.SpNetGramId)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_PREMIUM, LocaleController.getString(R.string.SpNetGramPremiumPlan)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_SP_COIN, LocaleController.getString(R.string.SpNetGramCoinAirdrop)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_GEMS, LocaleController.getString(R.string.SpNetGramGems)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_REDEEM_LICENSE, LocaleController.getString(R.string.SpNetGramRedeemLicense)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 6, LocaleController.getString(R.string.SpNetGramFeaturesInfo)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_GENERAL, LocaleController.getString(R.string.SpNetGramGeneral)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_APPEARANCE, LocaleController.getString(R.string.SpNetGramAppearance)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_CHATS, LocaleController.getString(R.string.SpNetGramChats)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_PRIVACY, LocaleController.getString(R.string.SpNetGramPrivacyPower)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_WALLET, LocaleController.getString(R.string.SpNetGramWallet)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_CAMERA, LocaleController.getString(R.string.SpNetGramCameraMedia)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_EXPERIMENTAL, LocaleController.getString(R.string.SpNetGramExperimental)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_UPDATES, LocaleController.getString(R.string.SpNetGramUpdates)));
 
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 7, LocaleController.getString(R.string.SpNetGramPrivacySection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_GHOST, LocaleController.getString(R.string.SpNetGramGhostMode), LocaleController.getString(R.string.SpNetGramGhostModeInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ANTI_REVOKE, LocaleController.getString(R.string.SpNetGramAntiRevoke), LocaleController.getString(R.string.SpNetGramAntiRevokeInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_HIDE_TYPING, LocaleController.getString(R.string.SpNetGramHideTyping), LocaleController.getString(R.string.SpNetGramHideTypingInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_NO_READ, LocaleController.getString(R.string.SpNetGramNoReadReceipts), LocaleController.getString(R.string.SpNetGramNoReadReceiptsInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 15, LocaleController.getString(R.string.SpNetGramPrivacyInfo)));
-
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 16, LocaleController.getString(R.string.SpNetGramChatSection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_QUICK_ACTIONS, LocaleController.getString(R.string.SpNetGramQuickActions), LocaleController.getString(R.string.SpNetGramQuickActionsInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_TRANSLATE_BAR, LocaleController.getString(R.string.SpNetGramTranslateBar), LocaleController.getString(R.string.SpNetGramTranslateBarInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_EDIT_HISTORY, LocaleController.getString(R.string.SpNetGramEditHistory), LocaleController.getString(R.string.SpNetGramEditHistoryInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 20, LocaleController.getString(R.string.SpNetGramChatSectionInfo)));
-
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 21, LocaleController.getString(R.string.SpNetGramFiltersSection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_SPAM_FILTER, LocaleController.getString(R.string.SpNetGramSpamFilter), LocaleController.getString(R.string.SpNetGramSpamFilterInfo)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_HIDE_SPONSORED, LocaleController.getString(R.string.SpNetGramHideSponsored), LocaleController.getString(R.string.SpNetGramHideSponsoredInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 24, LocaleController.getString(R.string.SpNetGramFiltersSectionInfo)));
-
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 25, LocaleController.getString(R.string.SpNetGramSecuritySection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ENABLE_HIDDEN, LocaleController.getString(R.string.SpNetGramHiddenChatsToggle), LocaleController.getString(R.string.SpNetGramHiddenChatsInfo)));
-        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_MANAGE_HIDDEN, LocaleController.getString(R.string.SpNetGramManageHiddenChats)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_ENABLE_LOCKS, LocaleController.getString(R.string.SpNetGramChatLocks), LocaleController.getString(R.string.SpNetGramChatLocksInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 28, LocaleController.getString(R.string.SpNetGramSecuritySectionInfo)));
-
-        items.add(new ItemInner(VIEW_TYPE_HEADER, 29, LocaleController.getString(R.string.SpNetGramUiSection)));
-        items.add(new ItemInner(VIEW_TYPE_CHECK, ID_UI_REDESIGN, LocaleController.getString(R.string.SpNetGramUiRedesign), LocaleController.getString(R.string.SpNetGramUiRedesignInfo)));
-        items.add(new ItemInner(VIEW_TYPE_INFO, 32, LocaleController.getString(R.string.SpNetGramUiSectionInfo)));
+        items.add(new ItemInner(VIEW_TYPE_HEADER, 6, LocaleController.getString(R.string.SpNetGramInfoSection)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_OFFICIAL_CHANNEL, LocaleController.getString(R.string.SpNetGramOfficialChannel), LocaleController.getString(R.string.SpNetGramOfficialChannelValue)));
+        items.add(new ItemInner(VIEW_TYPE_TEXT, ID_OFFICIAL_GROUP, LocaleController.getString(R.string.SpNetGramOfficialGroup), LocaleController.getString(R.string.SpNetGramOfficialGroupValue)));
+        items.add(new ItemInner(VIEW_TYPE_DETAIL, ID_SOURCE_CODE, LocaleController.getString(R.string.SpNetGramSourceCode), LocaleController.getString(R.string.SpNetGramSourceCodeInfo)));
+        items.add(new ItemInner(VIEW_TYPE_DETAIL, ID_TRANSLATE, LocaleController.getString(R.string.SpNetGramTranslate), LocaleController.getString(R.string.SpNetGramTranslateInfo)));
+        items.add(new ItemInner(VIEW_TYPE_DETAIL, ID_DONATE, LocaleController.getString(R.string.SpNetGramDonate), LocaleController.getString(R.string.SpNetGramDonateInfo)));
+        items.add(new ItemInner(VIEW_TYPE_DETAIL, ID_COPY_REPORT, LocaleController.getString(R.string.SpNetGramCopyReport), LocaleController.getString(R.string.SpNetGramCopyReportInfo)));
 
         if (adapter == null) {
             return;
@@ -358,7 +297,7 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 return false;
             }
             int type = items.get(position).viewType;
-            return type == VIEW_TYPE_TEXT || type == VIEW_TYPE_CHECK;
+            return type == VIEW_TYPE_TEXT || type == VIEW_TYPE_DETAIL;
         }
 
         @NonNull
@@ -369,13 +308,15 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 view = new HeaderCell(getContext(), spnetResources);
             } else if (viewType == VIEW_TYPE_TEXT) {
                 view = new TextSettingsCell(getContext(), spnetResources);
-            } else if (viewType == VIEW_TYPE_CHECK) {
-                view = new TextCheckCell(getContext(), spnetResources);
+            } else if (viewType == VIEW_TYPE_DETAIL) {
+                view = new DetailCell(getContext());
             } else {
                 view = new TextInfoPrivacyCell(getContext(), spnetResources);
             }
-            if (viewType == VIEW_TYPE_TEXT || viewType == VIEW_TYPE_CHECK) {
-                view.setBackground(SpNetGramUi.createCardBackground(14, true));
+            if (viewType == VIEW_TYPE_TEXT || viewType == VIEW_TYPE_DETAIL) {
+                view.setBackground(Theme.getSelectorDrawable(true, spnetResources));
+            } else {
+                view.setBackgroundColor(COLOR_BG);
             }
             return new RecyclerListView.Holder(view);
         }
@@ -391,24 +332,16 @@ public class SpNetGramSettingsActivity extends BaseFragment {
                 ((HeaderCell) holder.itemView).setText(item.text);
             } else if (holder.getItemViewType() == VIEW_TYPE_TEXT) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
+                cell.setIcon(getIconForItem(item.id));
                 if (item.value != null) {
                     cell.setTextAndValue(item.text, item.value, divider);
-                    if (item.id == ID_ACCESS_STATUS) {
-                        int color = Theme.getColor(Theme.key_windowBackgroundWhiteValueText);
-                        if (accessState == ACCESS_ACTIVE) {
-                            color = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText);
-                        } else if (accessState == ACCESS_LOCKED) {
-                            color = Theme.getColor(Theme.key_text_RedBold);
-                        }
-                        cell.setTextValueColor(color);
-                    }
+                    cell.setTextValueColor(COLOR_HEADER);
                 } else {
                     cell.setText(item.text, divider);
                 }
-            } else if (holder.getItemViewType() == VIEW_TYPE_CHECK) {
-                TextCheckCell cell = (TextCheckCell) holder.itemView;
-                String value = item.value != null ? item.value.toString() : "";
-                cell.setTextAndValueAndCheck(item.text.toString(), value, isToggleEnabled(item.id), true, divider);
+            } else if (holder.getItemViewType() == VIEW_TYPE_DETAIL) {
+                DetailCell cell = (DetailCell) holder.itemView;
+                cell.setTextAndValueAndIcon(item.text, item.value, getIconForItem(item.id), divider);
             } else {
                 TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                 cell.setText(item.text);
@@ -417,53 +350,100 @@ public class SpNetGramSettingsActivity extends BaseFragment {
         }
     }
 
-    private void refreshAccessStatus() {
-        String token = SpNetGramConfig.getBackendToken();
-        if (token == null || token.isEmpty()) {
-            accessState = ACCESS_LOCKED;
-            accessValueText = buildAccessValue(false, null);
-            updateItems(true);
-            return;
+    private int getIconForItem(int id) {
+        switch (id) {
+            case ID_GENERAL:
+                return R.drawable.settings_account;
+            case ID_APPEARANCE:
+                return R.drawable.menu_night_mode_24;
+            case ID_CHATS:
+                return R.drawable.settings_chat;
+            case ID_PRIVACY:
+                return R.drawable.settings_privacy;
+            case ID_WALLET:
+                return R.drawable.settings_wallet;
+            case ID_CAMERA:
+                return R.drawable.video_settings;
+            case ID_EXPERIMENTAL:
+                return R.drawable.settings_features;
+            case ID_UPDATES:
+                return R.drawable.menu_download_off_24;
+            case ID_OFFICIAL_CHANNEL:
+                return R.drawable.settings_channel;
+            case ID_OFFICIAL_GROUP:
+                return R.drawable.settings_group;
+            case ID_SOURCE_CODE:
+                return R.drawable.menu_feature_code;
+            case ID_TRANSLATE:
+                return R.drawable.settings_language;
+            case ID_DONATE:
+                return R.drawable.settings_gift;
+            case ID_COPY_REPORT:
+                return R.drawable.settings_logs;
+            default:
+                return 0;
         }
-        SpNetGramApi.accessStatus(token, json -> {
-            if (json == null) {
-                accessState = ACCESS_UNKNOWN;
-                accessValueText = buildAccessValue(null, null);
-            } else {
-                boolean canUse = json.optBoolean("canUse", false);
-                String expiresAt = null;
-                if (json.has("premium")) {
-                    try {
-                        expiresAt = json.getJSONObject("premium").optString("expiresAt", null);
-                    } catch (Exception ignore) {
-                        expiresAt = null;
-                    }
-                }
-                accessState = canUse ? ACCESS_ACTIVE : ACCESS_LOCKED;
-                accessValueText = buildAccessValue(canUse, expiresAt);
-            }
-            updateItems(true);
-        });
     }
 
-    private String buildAccessValue(Boolean canUse, String expiresAt) {
-        String status;
-        if (canUse == null) {
-            status = LocaleController.getString(R.string.SpNetGramAccessUnknown);
-        } else if (canUse) {
-            status = LocaleController.getString(R.string.SpNetGramAccessActive);
-        } else {
-            status = LocaleController.getString(R.string.SpNetGramAccessLocked);
+    private static class DetailCell extends FrameLayout {
+        private final ImageView iconView;
+        private final TextView titleView;
+        private final TextView subtitleView;
+        private final Paint dividerPaint = new Paint();
+        private boolean needDivider;
+
+        public DetailCell(Context context) {
+            super(context);
+            setWillNotDraw(false);
+
+            iconView = new ImageView(context);
+            iconView.setScaleType(ImageView.ScaleType.CENTER);
+            addView(iconView, LayoutHelper.createFrame(52, 52, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 8, 6, 8, 0));
+
+            titleView = new TextView(context);
+            titleView.setTextColor(COLOR_TEXT);
+            titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            titleView.setLines(1);
+            titleView.setMaxLines(1);
+            titleView.setSingleLine(true);
+            titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            titleView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
+            addView(titleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 64, 10, 21, 0));
+
+            subtitleView = new TextView(context);
+            subtitleView.setTextColor(COLOR_MUTED);
+            subtitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+            subtitleView.setLines(1);
+            subtitleView.setMaxLines(1);
+            subtitleView.setSingleLine(true);
+            subtitleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            subtitleView.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+            addView(subtitleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 64, 35, 21, 0));
+
+            dividerPaint.setColor(COLOR_DIVIDER);
         }
 
-        String expiryText;
-        if (expiresAt == null || expiresAt.isEmpty()) {
-            expiryText = LocaleController.getString(R.string.SpNetGramAccessNoExpiry);
-        } else {
-            String date = expiresAt.length() >= 10 ? expiresAt.substring(0, 10) : expiresAt;
-            expiryText = LocaleController.formatString(R.string.SpNetGramAccessExpires, date);
+        public void setTextAndValueAndIcon(CharSequence text, CharSequence value, int resId, boolean divider) {
+            titleView.setText(text);
+            subtitleView.setText(value);
+            iconView.setImageResource(resId);
+            iconView.setColorFilter(COLOR_ICON);
+            needDivider = divider;
+            setWillNotDraw(!divider);
         }
 
-        return status + " · " + expiryText;
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), AndroidUtilities.dp(64) + (needDivider ? 1 : 0));
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            if (needDivider) {
+                canvas.drawLine(LocaleController.isRTL ? 0 : AndroidUtilities.dp(20), getMeasuredHeight() - 1,
+                        getMeasuredWidth() - (LocaleController.isRTL ? AndroidUtilities.dp(20) : 0), getMeasuredHeight() - 1, dividerPaint);
+            }
+        }
     }
 }

@@ -60,6 +60,7 @@ import android.text.style.ImageSpan;
 import android.util.LongSparseArray;
 import android.util.Property;
 import android.util.StateSet;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -118,6 +119,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.NotificationsController;
+import org.telegram.messenger.SpNetGramConfig;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SpNetGramConfig;
@@ -691,6 +693,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private long startArchivePullingTime;
     private boolean scrollingManually;
     private boolean canShowHiddenArchive;
+    private GestureDetector hiddenChatsDetector;
 
     private AnimatorSet tabsAnimation;
     private boolean tabsAnimationInProgress;
@@ -4041,6 +4044,30 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             };
             viewPage.listView.setVerticalScrollBarEnabled(true);
             viewPage.listView.setInstantClick(true);
+            if (!onlySelect && viewPage.dialogsType == DIALOGS_TYPE_DEFAULT) {
+                if (hiddenChatsDetector == null) {
+                    hiddenChatsDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                        @Override
+                        public boolean onDoubleTap(MotionEvent e) {
+                            if (!SpNetGramConfig.isHiddenChatsEnabled()) {
+                                return false;
+                            }
+                            float threshold = viewPage.listView.getHeight() - AndroidUtilities.dp(56);
+                            if (e.getY() >= threshold) {
+                                presentFragment(new SpNetGramHiddenChatsActivity());
+                                return true;
+                            }
+                            return false;
+                        }
+                    });
+                }
+                viewPage.listView.setOnTouchListener((v, event) -> {
+                    if (hiddenChatsDetector != null) {
+                        hiddenChatsDetector.onTouchEvent(event);
+                    }
+                    return false;
+                });
+            }
             viewPage.layoutManager = new LinearLayoutManager(context) {
 
                 @Override
