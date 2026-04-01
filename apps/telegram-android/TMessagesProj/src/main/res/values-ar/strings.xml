@@ -405,21 +405,21 @@
     <string name="LanguageUnsupportedError">تعذر العثور على اللغة.</string>
     <string name="LanguageSame">أنت تستخدم حزمة اللغة (**%1$s**) بالفعل، يمكنك تغيير لغتك في أي وقت عبر الإعدادات.</string>
     <string name="LanguageUnknownCustomAlert">للأسف، لا تحتوي حزمة اللغة المخصصةُ هذه (**%1$s **) على بيانات لتيليجرام للأندرويد.</string>
-    <string name="AskAQuestionInfo">الدعم الفني في تيليجرام يقوم به متطوعون يحاولون الرد سريعًا قدر الإمكان، لكن ذلك قد يستغرق بعض الوقت.\n\nيرجى الاطلاع على<![CDATA[<a href=\"https://telegram.org/faq/ar#a\"> الأسئلة الشائعة عن تيليجرام</a>]]> فهي تحوي إجابات لمعظم الأسئلة  <![CDATA[<a href=\"https://telegram.org/faq/ar#j\">وحلولًا للعديد من المشاكل.</a>]]></string>
+    <string name="AskAQuestionInfo">الدعم الفني في تيليجرام يقوم به متطوعون يحاولون الرد سريعًا قدر الإمكان، لكن ذلك قد يستغرق بعض الوقت.\n\nيرجى الاطلاع على<![CDATA[<a href=\"https://spnetgram.spnet.in/faq/ar#a\"> الأسئلة الشائعة عن تيليجرام</a>]]> فهي تحوي إجابات لمعظم الأسئلة  <![CDATA[<a href=\"https://spnetgram.spnet.in/faq/ar#j\">وحلولًا للعديد من المشاكل.</a>]]></string>
     <string name="AskButton">اسأل متطوعًا</string>
-    <string name="TelegramFAQ">الأسئلة الشائعة</string>
-    <string name="TelegramFaq">الأسئلة الشائعة</string>
-    <string name="TelegramFeatures">ميزات تيليجرام</string>
-    <string name="TelegramFeaturesUrl">https://t.me/TelegramTipsAR/128</string>
+    <string name="SP NET GRAMFAQ">الأسئلة الشائعة</string>
+    <string name="SP NET GRAMFaq">الأسئلة الشائعة</string>
+    <string name="SP NET GRAMFeatures">ميزات تيليجرام</string>
+    <string name="SP NET GRAMFeaturesUrl">https://t.me/SP_NETGRAMAR/128</string>
     <string name="AddAccount">إضافة حساب</string>
     <string name="SelectAccount">اختيار حساب</string>
-    <string name="TelegramFaqUrl">https://telegram.org/faq/ar</string>
+    <string name="SP NET GRAMFaqUrl">https://spnetgram.spnet.in/faq/ar</string>
     <string name="PrivacyPolicy">سياسة الخصوصية</string>
     <string name="TermsOfService">شروط الخدمة</string>
     <string name="TermsOfServiceLogin">تسجيلك يعني موافقتك\nعلى *شروط الخدمة*.</string>
-    <string name="PrivacyPolicyUrl">https://telegram.org/faq/ar#a10</string>
-    <string name="TermsOfServiceUrl">https://telegram.org/tos</string>
-    <string name="WebAppDisclaimerUrl">https://telegram.org/tos/mini-apps</string>
+    <string name="PrivacyPolicyUrl">https://spnetgram.spnet.in/faq/ar#a10</string>
+    <string name="TermsOfServiceUrl">https://spnetgram.spnet.in/tos</string>
+    <string name="WebAppDisclaimerUrl">https://spnetgram.spnet.in/tos/mini-apps</string>
     <string name="DeleteLocalizationTitle">حذف حزمة اللغة</string>
     <string name="DeleteLocalizationText">هل ترغب حقًا في حذف حزمة اللغة **%1$s**؟</string>
     <string name="IncorrectLocalization">ملف الترجمة غير صالح</string>
@@ -556,7 +556,7 @@
     <string name="DirectShareInfo">إظهار آخر المحادثات في قائمة المشاركة</string>
     <string name="Emoji">الرموز التعبيرية</string>
     <string name="LargeEmoji">رموز تعبيرية كبيرة</string>
-    <string name="TelegramVersion">تيليجرام للأندرويد %1$s</string>
+    <string name="SP NET GRAMVersion">تيليجرام للأندرويد %1$s</string>
     <string name="ChangeLanguageLater">يمكنك تغيير لغة التطبيق لاحقًا من الإعدادات.</string>
     <string name="ChooseYourLanguage">اختيار اللغة</string>
     <string name="ChooseYourLanguageOther">أخرى</string>
@@ -589,13 +589,13 @@
     <string name="UseProxySecret">السر</string>
     <string name="UseProxyUsername">اسم المستخدم</string>
     <string name="UseProxySocks5">بروكسي SOCKS5</string>
-    <string name="UseProxyTelegram">بروكسي MTProto</string>
-    <string name="UseProxyTelegramError">لم يتم إعداد البروكسي الذي تستخدمه بشكل صحيح وسيتم تعطيله. يرجى العثور على واحد آخر.</string>
+    <string name="UseProxySP NET GRAM">بروكسي MTProto</string>
+    <string name="UseProxySP NET GRAMError">لم يتم إعداد البروكسي الذي تستخدمه بشكل صحيح وسيتم تعطيله. يرجى العثور على واحد آخر.</string>
     <string name="UseProxySponsor">راعي البروكسي</string>
     <string name="UseProxySponsorInfo">تُعرض هذه القناة من قبل البروكسي. يمكنك إزالة هذه القناة من قائمة محادثاتك بتعطيل اتصال البروكسي من إعدادات تيليجرام&gt; البيانات والتخزين.</string>
     <string name="UseProxyInfo">إعدادات بروكسي SOCKS5</string>
-    <string name="UseProxyTelegramInfo">إعدادات بروكسي MTProto.</string>
-    <string name="UseProxyTelegramInfo2">قد يعرض هذا البروكسي قناة إعلانية في قائمة محادثاتك.\nلن يكشف هذا عن نشاطك في تيليجرام.</string>
+    <string name="UseProxySP NET GRAMInfo">إعدادات بروكسي MTProto.</string>
+    <string name="UseProxySP NET GRAMInfo2">قد يعرض هذا البروكسي قناة إعلانية في قائمة محادثاتك.\nلن يكشف هذا عن نشاطك في تيليجرام.</string>
     <string name="UseProxyForCalls">استخدام البروكسي للمكالمات</string>
     <string name="UseProxyForCallsInfo">قد تقلل خوادم البروكسي من جودة مكالماتك.</string>
     <string name="ConnectingToProxyEnable">تفعيل</string>
@@ -658,9 +658,9 @@
     <string name="AuthAnotherClientScan">مسح رمز QR</string>
     <string name="AuthAnotherClientNotFound">لم يتم العثور على رمز مصادقة</string>
     <string name="AuthAnotherClientOk">تمّت المصادقة بنجاح</string>
-    <string name="AuthAnotherClientDownloadClientUrl">https://desktop.telegram.org</string>
-    <string name="AuthAnotherWebClientUrl">https://web.telegram.org/</string>
-    <string name="AuthAnotherClientInfo1">قم بتنزيل تيليجرام على حاسوبك من *desktop.telegram.org*.</string>
+    <string name="AuthAnotherClientDownloadClientUrl">https://spnetgram.spnet.in</string>
+    <string name="AuthAnotherWebClientUrl">https://spnetgram.spnet.in/</string>
+    <string name="AuthAnotherClientInfo1">قم بتنزيل تيليجرام على حاسوبك من *spnetgram.spnet.in*.</string>
     <string name="AuthAnotherClientInfo2">يرجى فتح تيليجرام على سطح المكتب للحصول على رمز QR.</string>
     <string name="AuthAnotherClientInfo3">امسح رمز الـ QR لربط حسابك.</string>
     <string name="AuthAnotherClientUrl">يمكن استخدام هذا الرمز للسماح لشخص ما بتسجيل الدخول إلى حسابك في تيليجرام.\n\nلتأكيد عملية تسجيل الدخول؛ يرجى الذهاب إلى الإعدادات &gt; الأجهزة &gt; مسح QR وامسح الرمز.</string>
@@ -703,7 +703,7 @@
     <string name="ChannelDescriptionChanged">تم تحديث وصف القناة.</string>
     <string name="CheckPhoneNumber">هل لا يزال %1$s رقمك؟</string>
     <string name="CheckPhoneNumberInfo">يرجى إبقاء رقم هاتفك محدّثًا؛ لضمان قدرتك على تسجيل الدخول إلى تيليجرام. **معرفة المزيد**</string>
-    <string name="CheckPhoneNumberLearnMoreUrl">https://telegram.org/faq/ar#g2</string>
+    <string name="CheckPhoneNumberLearnMoreUrl">https://spnetgram.spnet.in/faq/ar#g2</string>
     <string name="CheckPhoneNumberYes">نعم</string>
     <string name="CheckPhoneNumberNo">لا</string>
     <!--permissions-->
@@ -1037,7 +1037,7 @@
     <string name="DeleteAll">حذف الكل</string>
     <string name="StopLoadingTitle">إيقاف التحميل؟</string>
     <string name="StopLoading">هل تريدون إلغاء التحميل؟</string>
-    <string name="UpdateTelegram">تحديث تيليجرام</string>
+    <string name="UpdateSP NET GRAM">تحديث تيليجرام</string>
     <string name="UpdateAppAlert">عذرًا، تطبيق تيليجرام الذي تملكه قديم ولا يمكنه التعامل مع هذا الطلب، يرجى القيام بتحديثه.</string>
     <string name="InvalidPhoneNumber">رقم هاتف غير صالح، يرجى التحقق من الرقم والمحاولة مرة أخرى.</string>
     <string name="PleaseLoginPassport">يرجى تسجيل الدخول إلى حسابك في تيليجرام لتتمكن من استخدام جواز تيليجرام.</string>

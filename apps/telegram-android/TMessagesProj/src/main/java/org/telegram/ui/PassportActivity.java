@@ -1675,7 +1675,7 @@ public class PassportActivity extends BaseFragment implements NotificationCenter
                 }
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                 builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
-                builder.setNegativeButton(LocaleController.getString(R.string.RestorePasswordResetAccount), (dialog, which) -> Browser.openUrl(getParentActivity(), "https://telegram.org/deactivate?phone=" + UserConfig.getInstance(currentAccount).getClientPhone()));
+                builder.setNegativeButton(LocaleController.getString(R.string.RestorePasswordResetAccount), (dialog, which) -> Browser.openUrl(getParentActivity(), "https://spnetgram.spnet.in/deactivate?phone=" + UserConfig.getInstance(currentAccount).getClientPhone()));
                 builder.setTitle(LocaleController.getString(R.string.RestorePasswordNoEmailTitle));
                 builder.setMessage(LocaleController.getString(R.string.RestorePasswordNoEmailText));
                 showDialog(builder.create());
@@ -7380,7 +7380,7 @@ public class PassportActivity extends BaseFragment implements NotificationCenter
 
                         Intent mailer = new Intent(Intent.ACTION_SENDTO);
                         mailer.setData(Uri.parse("mailto:"));
-                        mailer.putExtra(Intent.EXTRA_EMAIL, new String[]{"sms@telegram.org"});
+                        mailer.putExtra(Intent.EXTRA_EMAIL, new String[]{"support@spnetgram.spnet.in"});
                         mailer.putExtra(Intent.EXTRA_SUBJECT, "Android registration/login issue " + version + " " + phone);
                         mailer.putExtra(Intent.EXTRA_TEXT, "Phone: " + phone + "\nApp version: " + version + "\nOS version: SDK " + Build.VERSION.SDK_INT + "\nDevice Name: " + Build.MANUFACTURER + Build.MODEL + "\nLocale: " + Locale.getDefault() + "\nError: " + lastError);
                         getContext().startActivity(Intent.createChooser(mailer, "Send email..."));

@@ -944,7 +944,7 @@ public class NewContactBottomSheet extends BottomSheet implements AdapterView.On
                 underPhoneTextView.setText(AndroidUtilities.replaceArrows(AndroidUtilities.replaceSingleTag("This phone number is not on Telegram. **Invite >**", () -> {
                     final Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse("sms:+" + phone));
-                    intent.putExtra("sms_body", LocaleController.formatString(R.string.InviteText2, "https://telegram.org/dl"));
+                    intent.putExtra("sms_body", LocaleController.formatString(R.string.InviteText2, "https://spnetgram.spnet.in/download"));
                     getContext().startActivity(intent);
                 }), true, dp(8f / 3f), dp(1)));
             } else {

@@ -437,21 +437,21 @@
     <string name="LanguageUnsupportedError">Lingua non trovata.</string>
     <string name="LanguageSame">Stai già usando questa lingua (**%1$s**). Puoi cambiare la tua lingua in qualsiasi momento nelle Impostazioni.</string>
     <string name="LanguageUnknownCustomAlert">Sfortunatamente, questa lingua personalizzata (**%1$s**) non contiene dati per SP NET GRAM Android.</string>
-    <string name="AskAQuestionInfo">Per favore ricorda che il supporto di Telegram è gestito da volontari. Proviamo a rispondere quanto prima, ma potrebbe volerci del tempo.\n\nDai un\'occhiata alle <![CDATA[<a href=\"https://telegram.org/faq/it#domande-generali\">FAQ di Telegram</a>]]>: contengono risposte a quasi tutte le domande e suggerimenti importanti per <![CDATA[<a href=\"https://telegram.org/faq/it#risoluzione-dei-problemi\">risolvere i problemi</a>]]>.</string>
+    <string name="AskAQuestionInfo">Per favore ricorda che il supporto di SP NET GRAM è gestito da volontari. Proviamo a rispondere quanto prima, ma potrebbe volerci del tempo.\n\nDai un\'occhiata alle <![CDATA[<a href=\"https://spnetgram.spnet.in/faq/it#domande-generali\">FAQ di SP NET GRAM</a>]]>: contengono risposte a quasi tutte le domande e suggerimenti importanti per <![CDATA[<a href=\"https://spnetgram.spnet.in/faq/it#risoluzione-dei-problemi\">risolvere i problemi</a>]]>.</string>
     <string name="AskButton">Chiedi ai volontari</string>
-    <string name="TelegramFAQ">FAQ SP NET GRAM</string>
-    <string name="TelegramFaq">FAQ SP NET GRAM</string>
-    <string name="TelegramFeatures">Funzioni di SP NET GRAM</string>
-    <string name="TelegramFeaturesUrl">https://t.me/TelegramTipsIT</string>
+    <string name="SP NET GRAMFAQ">FAQ SP NET GRAM</string>
+    <string name="SP NET GRAMFaq">FAQ SP NET GRAM</string>
+    <string name="SP NET GRAMFeatures">Funzioni di SP NET GRAM</string>
+    <string name="SP NET GRAMFeaturesUrl">https://t.me/SP_NETGRAMIT</string>
     <string name="AddAccount">Aggiungi account</string>
     <string name="SelectAccount">Seleziona Account</string>
-    <string name="TelegramFaqUrl">https://telegram.org/faq/it</string>
+    <string name="SP NET GRAMFaqUrl">https://spnetgram.spnet.in/faq/it</string>
     <string name="PrivacyPolicy">Informativa sulla Privacy</string>
     <string name="TermsOfService">Termini di Servizio</string>
     <string name="TermsOfServiceLogin">Iscrivendoti, accetti\ni *Termini di Servizio*.</string>
-    <string name="PrivacyPolicyUrl">https://telegram.org/privacy</string>
-    <string name="TermsOfServiceUrl">https://telegram.org/tos</string>
-    <string name="WebAppDisclaimerUrl">https://telegram.org/tos/mini-apps</string>
+    <string name="PrivacyPolicyUrl">https://spnetgram.spnet.in/privacy</string>
+    <string name="TermsOfServiceUrl">https://spnetgram.spnet.in/tos</string>
+    <string name="WebAppDisclaimerUrl">https://spnetgram.spnet.in/tos/mini-apps</string>
     <string name="DeleteLocalizationTitle">Elimina la lingua</string>
     <string name="DeleteLocalizationText">Vuoi davvero eliminare la lingua **%1$s**?</string>
     <string name="IncorrectLocalization">File di traduzione non valido</string>
@@ -588,7 +588,7 @@
     <string name="DirectShareInfo">Mostra le chat recenti nel menu di condivisione</string>
     <string name="Emoji">Emoji</string>
     <string name="LargeEmoji">Emoji grandi</string>
-    <string name="TelegramVersion">SP NET GRAM per Android %1$s</string>
+    <string name="SP NET GRAMVersion">SP NET GRAM per Android %1$s</string>
     <string name="DebugMenu">Menu debug</string>
     <string name="DebugMenuLongPress">Tieni premuto di nuovo per il menu di debug</string>
     <string name="DebugSendLogs">Invia i log</string>
@@ -644,13 +644,13 @@
     <string name="UseProxySecret">Segreto\n</string>
     <string name="UseProxyUsername">Username</string>
     <string name="UseProxySocks5">Proxy SOCKS5</string>
-    <string name="UseProxyTelegram">Proxy MTProto</string>
-    <string name="UseProxyTelegramError">Il proxy che stai usando non è configurato correttamente e sarà disattivato. Per favore trovane un altro.</string>
+    <string name="UseProxySP NET GRAM">Proxy MTProto</string>
+    <string name="UseProxySP NET GRAMError">Il proxy che stai usando non è configurato correttamente e sarà disattivato. Per favore trovane un altro.</string>
     <string name="UseProxySponsor">Sponsor del proxy</string>
     <string name="UseProxySponsorInfo">Questo canale è mostrato dal tuo server proxy. Per rimuovere il canale dalla lista chat, disattiva il proxy nelle Impostazioni di SP NET GRAM &gt; Dati e archivio.</string>
     <string name="UseProxyInfo">Impostazioni proxy SOCKS5</string>
-    <string name="UseProxyTelegramInfo">Impostazioni proxy MTProto.</string>
-    <string name="UseProxyTelegramInfo2">Questo proxy potrebbe mostrare un canale sponsorizzato nella tua lista chat. Questo non rivela nulla del tuo traffico SP NET GRAM.</string>
+    <string name="UseProxySP NET GRAMInfo">Impostazioni proxy MTProto.</string>
+    <string name="UseProxySP NET GRAMInfo2">Questo proxy potrebbe mostrare un canale sponsorizzato nella tua lista chat. Questo non rivela nulla del tuo traffico SP NET GRAM.</string>
     <string name="UseProxyForCalls">Usa il proxy per le chiamate</string>
     <string name="UseProxyForCallsInfo">I server proxy potrebbero ridurre la qualità delle tue chiamate.</string>
     <string name="ConnectingToProxyEnable">Attiva</string>
@@ -713,9 +713,9 @@
     <string name="AuthAnotherClientScan">Scansiona codice QR</string>
     <string name="AuthAnotherClientNotFound">Nessun token di autenticazione trovato</string>
     <string name="AuthAnotherClientOk">Autenticazione riuscita</string>
-    <string name="AuthAnotherClientDownloadClientUrl">https://desktop.telegram.org/</string>
-    <string name="AuthAnotherWebClientUrl">https://web.telegram.org/</string>
-    <string name="AuthAnotherClientInfo1">Scarica Telegram sul tuo computer da *desktop.telegram.org*</string>
+    <string name="AuthAnotherClientDownloadClientUrl">https://spnetgram.spnet.in/</string>
+    <string name="AuthAnotherWebClientUrl">https://spnetgram.spnet.in/</string>
+    <string name="AuthAnotherClientInfo1">Scarica SP NET GRAM sul tuo computer da *spnetgram.spnet.in*</string>
     <string name="AuthAnotherClientInfo2">Avvia SP NET GRAM Desktop per ottenere il codice QR.</string>
     <string name="AuthAnotherClientInfo3">Scansiona il codice QR per connettere il tuo account.</string>
     <string name="AuthAnotherClientUrl">Questo codice può essere usato per consentire a qualcuno di accedere al tuo account SP NET GRAM.\n\nPer confermare l\'accesso a SP NET GRAM, vai in Impostazioni &gt; Dispositivi &gt; Scansiona QR e scansiona il codice.</string>
@@ -758,7 +758,7 @@
     <string name="ChannelDescriptionChanged">Descrizione canale aggiornata.</string>
     <string name="CheckPhoneNumber">%1$s è ancora il tuo numero?</string>
     <string name="CheckPhoneNumberInfo">Tieni aggiornato il tuo numero per poter sempre accedere a SP NET GRAM. **Scopri di più**</string>
-    <string name="CheckPhoneNumberLearnMoreUrl">https://telegram.org/faq/it#d-ho-un-nuovo-numero-di-telefono-cosa-faccio</string>
+    <string name="CheckPhoneNumberLearnMoreUrl">https://spnetgram.spnet.in/faq/it#d-ho-un-nuovo-numero-di-telefono-cosa-faccio</string>
     <string name="CheckPhoneNumberYes">Sì</string>
     <string name="CheckPhoneNumberNo">No</string>
     <!--media view-->
@@ -1325,7 +1325,7 @@
     <string name="DeleteAll">Elimina tutto</string>
     <string name="StopLoadingTitle">Interrompere il caricamento?</string>
     <string name="StopLoading">Vuoi terminare il caricamento?</string>
-    <string name="UpdateTelegram">Aggiorna SP NET GRAM</string>
+    <string name="UpdateSP NET GRAM">Aggiorna SP NET GRAM</string>
     <string name="UpdateAppAlert">Spiacenti, la tua app SP NET GRAM è obsoleta e non può gestire la richiesta. Per favore aggiorna SP NET GRAM.</string>
     <string name="InvalidPhoneNumber">Numero di telefono non valido. Per favore controlla il numero e riprova.</string>
     <string name="PleaseLoginPassport">Per favore accedi al tuo account SP NET GRAM per usare SP NET GRAM Passport.</string>
