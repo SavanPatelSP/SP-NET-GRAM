@@ -1,17 +1,20 @@
 services:
   - type: web
     name: spnet-gram-backend
-    env: python
+    runtime: python
     rootDir: services/spnet-gram-backend
     buildCommand: pip install -r requirements.txt
     startCommand: python server.py
     plan: free
     autoDeploy: true
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: REQUIRE_LICENSE
+        value: "0"
       - key: SPNET_DB_PATH
-        value: /var/data/spnet_gram.db
+        value: /tmp/spnet_gram.db
       - key: SPNET_BOOTSTRAP_EMAIL
         value: savansocialsp@gmail.com
       - key: SPNET_BOOTSTRAP_ROLE
@@ -20,7 +23,22 @@ services:
         value: savan222859@gmail.com,savansocialsp@gmail.com
       - key: SPNET_TRUSTED_EMAILS
         value: savan222859@gmail.com,savansocialsp@gmail.com
-    disk:
-      name: spnet-gram-data
-      mountPath: /var/data
-      sizeGB: 1
+
+  - type: web
+    name: spnet-gram-web
+    runtime: static
+    rootDir: apps/web
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_BACKEND_URL
+        value: https://spnet-gram-backend.onrender.com
+      - key: VITE_TG_API_ID
+        value: "0"
+      - key: VITE_TG_API_HASH
+        value: ""
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
