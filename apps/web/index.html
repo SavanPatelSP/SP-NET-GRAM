@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SP NET GRAM — Web Prototype</title>
+    <title>SP NET GRAM - Telegram API Client</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -13,66 +13,100 @@
           <div class="brand-mark">SP</div>
           <div>
             <div class="brand-name">SP NET GRAM</div>
-            <div class="brand-sub">Private. Powerful. Yours.</div>
+            <div class="brand-sub">Telegram API beta</div>
           </div>
         </div>
 
         <nav class="nav">
-          <button class="nav-item active" data-view="chats" data-icon="CH">Chats</button>
+          <button class="nav-item active" data-view="telegram" data-icon="TG">Telegram</button>
           <button class="nav-item" data-view="assistant" data-icon="AI">Assistant</button>
           <button class="nav-item" data-view="spg" data-icon="ID">SPG ID</button>
           <button class="nav-item" data-view="premium" data-icon="PR">Premium</button>
-          <button class="nav-item" data-view="spcoin" data-icon="SP">SP Coin</button>
-          <button class="nav-item" data-view="gems" data-icon="GM">Gems</button>
+          <button class="nav-item" data-view="wallet" data-icon="SP">Wallet</button>
           <button class="nav-item" data-view="settings" data-icon="ST">Settings</button>
         </nav>
 
         <div class="sidebar-footer">
-          <div class="pill" id="authStatus">Disconnected</div>
-          <div class="pill accent">Airdrop Live</div>
+          <div class="pill" id="authStatus">SPG disconnected</div>
+          <div class="pill" id="tgNavStatus">Telegram offline</div>
         </div>
       </aside>
 
       <main class="main">
-        <section class="view" data-view="chats">
+        <section class="view" data-view="telegram">
           <div class="panel-header">
-            <h1>Chats</h1>
+            <div>
+              <h1>Telegram Client</h1>
+              <p class="muted">Connect with Telegram MTProto, load real dialogs, read messages, and send replies.</p>
+            </div>
             <div class="panel-actions">
-              <button class="ghost">New Chat</button>
-              <button class="primary">Invite</button>
+              <div class="pill" id="tgStatus">Not connected</div>
+              <button class="ghost" id="tgReloadChatsBtn">Reload</button>
+              <button class="ghost" id="tgLogoutBtn">Clear Session</button>
             </div>
           </div>
 
-          <div class="chat-layout">
-            <div class="chat-list">
-              <div class="chat-list-header">
-                <div class="search">
-                  <input type="text" placeholder="Search chats, people, or tags" />
+          <div class="telegram-layout">
+            <div class="telegram-side">
+              <div class="connect-card">
+                <h2>Telegram API Login</h2>
+                <div class="form-grid">
+                  <label>
+                    API ID
+                    <input id="tgApiId" type="number" inputmode="numeric" placeholder="123456" />
+                  </label>
+                  <label>
+                    API Hash
+                    <input id="tgApiHash" type="password" autocomplete="off" placeholder="Telegram API hash" />
+                  </label>
                 </div>
-                <button class="ghost small">New</button>
+                <button class="ghost full" id="tgSaveConfigBtn">Save API Config</button>
+                <div class="form-grid">
+                  <label>
+                    Phone Number
+                    <input id="tgPhone" type="tel" placeholder="+91..." />
+                  </label>
+                  <label>
+                    Login Code
+                    <input id="tgCode" type="text" inputmode="numeric" placeholder="12345" />
+                  </label>
+                </div>
+                <div class="button-row">
+                  <button class="primary" id="tgSendCodeBtn">Send Code</button>
+                  <button class="primary" id="tgSignInBtn">Sign In</button>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    2FA Password
+                    <input id="tgPassword" type="password" autocomplete="current-password" placeholder="Only if Telegram asks" />
+                  </label>
+                  <button class="ghost align-end" id="tgPasswordBtn">Submit 2FA</button>
+                </div>
+                <p class="muted tight" id="tgHint">Use your Telegram API credentials from my.telegram.org. Your Telegram session stays in this browser.</p>
               </div>
-              <div class="chat-list-body" id="chatList"></div>
+
+              <div class="chat-list">
+                <div class="chat-list-header">
+                  <input id="chatSearch" type="search" placeholder="Search loaded chats" />
+                </div>
+                <div class="chat-list-body" id="chatList"></div>
+              </div>
             </div>
+
             <div class="chat-thread">
               <div class="chat-thread-header">
                 <div>
-                  <div class="thread-name" id="threadName">Nova Squad</div>
-                  <div class="thread-meta">8 members · 2 online</div>
+                  <div class="thread-name" id="threadName">No Telegram chat selected</div>
+                  <div class="thread-meta" id="threadMeta">Connect Telegram to load dialogs.</div>
                 </div>
                 <div class="thread-actions">
-                  <button class="ghost">Search</button>
-                  <button class="ghost">Mute</button>
+                  <button class="ghost" id="summarizeThreadBtn">Summarize</button>
                 </div>
               </div>
               <div class="chat-messages" id="chatMessages"></div>
               <div class="composer">
-                <div class="composer-actions">
-                  <button class="ghost icon">+</button>
-                  <button class="ghost icon">@</button>
-                  <button class="ghost icon">GIF</button>
-                </div>
-                <input type="text" placeholder="Write something bold..." />
-                <button class="primary">Send</button>
+                <input id="composerInput" type="text" placeholder="Send a Telegram message..." />
+                <button class="primary" id="messageSendBtn">Send</button>
               </div>
             </div>
           </div>
@@ -80,10 +114,9 @@
 
         <section class="view hidden" data-view="assistant">
           <div class="panel-header">
-            <h1>Assistant</h1>
-            <div class="panel-actions">
-              <button class="ghost">New Prompt</button>
-              <button class="primary">Summarize Chat</button>
+            <div>
+              <h1>Assistant</h1>
+              <p class="muted">Summaries, rewrites, translations, and smart replies for selected Telegram context.</p>
             </div>
           </div>
           <div class="assistant-grid">
@@ -99,10 +132,10 @@
               </div>
             </div>
             <div class="assistant-card">
-              <h3>Chat with SP Assistant</h3>
+              <h3>SP Assistant</h3>
               <div class="assistant-thread" id="assistantThread"></div>
               <div class="composer">
-                <input id="assistantInput" type="text" placeholder="Ask the assistant..." />
+                <input id="assistantInput" type="text" placeholder="Ask about your current Telegram thread..." />
                 <button id="assistantSend" class="primary">Ask</button>
               </div>
             </div>
@@ -112,13 +145,11 @@
         <section class="view hidden" data-view="spg">
           <div class="panel-header">
             <h1>SP NET GRAM ID</h1>
-            <div class="panel-actions">
-              <button class="primary" id="mintSpgBtn">Mint SPG ID</button>
-            </div>
+            <button class="primary" id="mintSpgBtn">Mint SPG ID</button>
           </div>
           <div class="spg-card">
-            <div class="spg-badge" id="spgBadge">SPG-4F9A-88X2</div>
-            <p>Your SP NET GRAM ID is your portable identity across chats, premium perks, and wallet history.</p>
+            <div class="spg-badge" id="spgBadge">SPG-UNMINTED</div>
+            <p>Your SPG ID links your SP NET GRAM profile, premium state, wallet, and beta feedback.</p>
             <div class="spg-meta">
               <div>
                 <div class="label">Handle</div>
@@ -126,11 +157,11 @@
               </div>
               <div>
                 <div class="label">Rank</div>
-                <div id="spgRank">Founder</div>
+                <div id="spgRank">Beta</div>
               </div>
               <div>
                 <div class="label">Badges</div>
-                <div id="spgBadges">Alpha · Builder</div>
+                <div id="spgBadges">Tester</div>
               </div>
             </div>
           </div>
@@ -147,60 +178,26 @@
           <div class="card-grid" id="premiumPlans"></div>
         </section>
 
-        <section class="view hidden" data-view="spcoin">
+        <section class="view hidden" data-view="wallet">
           <div class="panel-header">
-            <h1>SP Coin</h1>
-            <div class="panel-actions">
-              <button class="ghost">History</button>
-              <button class="primary">Claim Airdrop</button>
-            </div>
+            <h1>SP Wallet</h1>
+            <button class="primary" id="airdropClaimBtn">Claim Airdrop</button>
           </div>
-          <div class="wallet-card">
-            <div>
-              <div class="label">Balance</div>
-              <div class="wallet-balance" id="spCoinBalance">12,480 SP</div>
+          <div class="wallet-grid">
+            <div class="wallet-card">
+              <div class="label">SP Coin</div>
+              <div class="wallet-balance" id="spCoinBalance">0 SP</div>
             </div>
-            <div class="wallet-cta">
-              <button class="primary">Send</button>
-              <button class="ghost">Receive</button>
+            <div class="wallet-card">
+              <div class="label">Gems</div>
+              <div class="wallet-balance" id="gemsBalance">0 Gems</div>
             </div>
-          </div>
-          <div class="airdrop-card">
-            <div>
+            <div class="airdrop-card">
               <div class="label">Next Airdrop</div>
-              <div class="airdrop-timer" id="airdropTimer">in 04:12:33</div>
+              <div class="airdrop-timer" id="airdropTimer">Login to check</div>
             </div>
-            <button class="primary" id="airdropClaimBtn">Claim Now</button>
           </div>
           <div class="tx-list" id="spcoinTx"></div>
-        </section>
-
-        <section class="view hidden" data-view="gems">
-          <div class="panel-header">
-            <h1>Gems</h1>
-            <div class="panel-actions">
-              <button class="ghost">Redeem</button>
-              <button class="primary">Buy Gems</button>
-            </div>
-          </div>
-          <div class="wallet-card">
-            <div>
-              <div class="label">Balance</div>
-              <div class="wallet-balance" id="gemsBalance">580 Gems</div>
-            </div>
-            <div class="wallet-cta">
-              <button class="primary">Boost</button>
-              <button class="ghost">Gift</button>
-            </div>
-          </div>
-          <div class="airdrop-card">
-            <div>
-              <div class="label">Daily Gem Boost</div>
-              <div class="airdrop-timer">+12 Gems in 3h</div>
-            </div>
-            <button class="ghost">View Tasks</button>
-          </div>
-          <div class="tx-list" id="gemsTx"></div>
         </section>
 
         <section class="view hidden" data-view="settings">
@@ -209,7 +206,7 @@
           </div>
           <div class="settings-grid">
             <div class="setting-card account-card">
-              <h3>Account</h3>
+              <h3>SP NET GRAM Account</h3>
               <div class="account-status" id="accountStatus">Not connected</div>
               <div class="account-grid">
                 <div class="account-form">
@@ -228,50 +225,21 @@
               </div>
               <div class="profile-summary">
                 <div class="label">Current User</div>
-                <div id="profileName">—</div>
-                <div id="profileEmail">—</div>
+                <div id="profileName">-</div>
+                <div id="profileEmail">-</div>
                 <button class="ghost" id="logoutBtn">Logout</button>
               </div>
               <div class="backend-row">
-                <div>
-                  <div class="label">Backend URL</div>
+                <label>
+                  Backend URL
                   <input id="backendUrl" type="text" value="http://localhost:8790" />
-                </div>
-                <button class="ghost" id="saveBackendBtn">Save</button>
+                </label>
+                <button class="ghost align-end" id="saveBackendBtn">Save</button>
               </div>
-              <div class="telegram-connect">
-                <div class="label">Telegram Connect</div>
-                <div class="account-status" id="tgStatus">Not connected</div>
-                <div class="account-grid">
-                  <div class="account-form">
-                    <h4>Phone Login</h4>
-                    <input id="tgPhone" type="tel" placeholder="+91..." />
-                    <button class="primary" id="tgSendCodeBtn">Send Code</button>
-                  </div>
-                  <div class="account-form">
-                    <h4>Verify Code</h4>
-                    <input id="tgCode" type="text" placeholder="12345" />
-                    <button class="ghost" id="tgSignInBtn">Sign In</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="setting-card">
-              <h3>Notifications</h3>
-              <p>Sound, vibration, quiet hours.</p>
-            </div>
-            <div class="setting-card">
-              <h3>Appearance</h3>
-              <p>Theme, chat bubbles, and compact mode.</p>
-            </div>
-            <div class="setting-card">
-              <h3>About</h3>
-              <p>Version info, release notes, legal.</p>
             </div>
             <div class="setting-card">
               <h3>Report Issue</h3>
-              <p>Send bugs, glitches, or feature feedback to the manager log.</p>
-              <textarea id="issueText" placeholder="Describe what happened..."></textarea>
+              <textarea id="issueText" placeholder="Describe the bug or feedback..."></textarea>
               <button class="ghost" id="issueSend">Send Report</button>
               <div class="muted" id="issueStatus"></div>
             </div>
@@ -279,9 +247,6 @@
         </section>
       </main>
     </div>
-
-    <div class="bg-orb orb-1"></div>
-    <div class="bg-orb orb-2"></div>
     <script type="module" src="app.js"></script>
   </body>
 </html>

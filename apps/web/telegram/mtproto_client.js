@@ -26,6 +26,17 @@ export class MtprotoClient {
     this.connected = true;
   }
 
+  async isAuthorized() {
+    await this.connect();
+    return this.client.checkAuthorization();
+  }
+
+  async getMe() {
+    await this.connect();
+    const user = await this.client.getMe();
+    return this._userSummary(user);
+  }
+
   async sendCode(phone) {
     await this.connect();
     const result = await this.client.sendCode(
@@ -36,7 +47,10 @@ export class MtprotoClient {
       phone,
     );
     this.phoneCodeHash = result.phoneCodeHash;
-    return { phoneCodeHash: result.phoneCodeHash };
+    return {
+      phoneCodeHash: result.phoneCodeHash,
+      isCodeViaApp: result.isCodeViaApp,
+    };
   }
 
   async signIn({ phone, code, phoneCodeHash }) {
@@ -49,7 +63,23 @@ export class MtprotoClient {
       }),
     );
     this._persistSession();
-    return result;
+    return result.user ? this._userSummary(result.user) : result;
+  }
+
+  async signInWithPassword(password) {
+    await this.connect();
+    const user = await this.client.signInWithPassword(
+      {
+        apiId: this.apiId,
+        apiHash: this.apiHash,
+      },
+      {
+        password: async () => password,
+        onError: async () => true,
+      },
+    );
+    this._persistSession();
+    return this._userSummary(user);
   }
 
   async getChats() {
@@ -65,50 +95,69 @@ export class MtprotoClient {
     );
 
     const entities = new Map();
-    (dialogs.users || []).forEach((user) => entities.set(user.id, user));
-    (dialogs.chats || []).forEach((chat) => entities.set(chat.id, chat));
+    (dialogs.users || []).forEach((user) => entities.set(user.id.toString(), user));
+    (dialogs.chats || []).forEach((chat) => entities.set(chat.id.toString(), chat));
 
     const messageMap = new Map();
     (dialogs.messages || []).forEach((message) => messageMap.set(message.id, message));
 
-    const chats = (dialogs.dialogs || []).map((dialog) => {
-      const peerId = this._peerToId(dialog.peer);
-      const entity = entities.get(peerId);
-      const title = entity
-        ? entity.title || [entity.firstName, entity.lastName].filter(Boolean).join(" ")
-        : "Unknown";
-      const lastMessage = messageMap.get(dialog.topMessage)?.message || "";
-      const summary = {
-        id: peerId,
-        title,
-        lastMessage,
-        unreadCount: dialog.unreadCount || 0,
-        peer: dialog.peer,
-      };
-      this.peerIndex.set(peerId, dialog.peer);
-      return summary;
-    });
+    const chats = (dialogs.dialogs || [])
+      .map((dialog) => {
+        const peerId = this._peerToId(dialog.peer);
+        const entity = entities.get(peerId.toString());
+        const topMessage = messageMap.get(dialog.topMessage);
+        const title = entity
+          ? entity.title || [entity.firstName, entity.lastName].filter(Boolean).join(" ")
+          : "Unknown chat";
+        const summary = {
+          id: peerId,
+          title,
+          lastMessage: topMessage?.message || "",
+          unreadCount: dialog.unreadCount || 0,
+          peer: dialog.peer,
+          kind: this._peerKind(dialog.peer),
+        };
+        this.peerIndex.set(peerId.toString(), dialog.peer);
+        return summary;
+      })
+      .filter((chat) => chat.id);
 
     return chats;
   }
 
   async getMessages(chatId) {
     await this.connect();
-    const peer = this.peerIndex.get(chatId) ?? chatId;
-    const messages = await this.client.getMessages(peer, { limit: 30 });
-    return messages.map((message) => ({
-      id: message.id,
-      chatId,
-      sender: message.senderId?.toString() || "Unknown",
-      text: message.message || "",
-      timestamp: this._toDate(message.date),
-    }));
+    const peer = this.peerIndex.get(chatId.toString()) ?? chatId;
+    const messages = await this.client.getMessages(peer, { limit: 40 });
+    return messages
+      .map((message) => ({
+        id: message.id,
+        chatId,
+        from: message.out ? "you" : "them",
+        sender: message.senderId?.toString() || "",
+        text: message.message || this._mediaLabel(message),
+        timestamp: this._toDate(message.date),
+      }))
+      .reverse();
   }
 
   async sendMessage(chatId, text) {
     await this.connect();
-    const peer = this.peerIndex.get(chatId) ?? chatId;
+    const peer = this.peerIndex.get(chatId.toString()) ?? chatId;
     await this.client.sendMessage(peer, { message: text });
+  }
+
+  async logout() {
+    try {
+      if (this.client) {
+        await this.client.disconnect();
+      }
+    } finally {
+      this.client = null;
+      this.connected = false;
+      localStorage.removeItem(this.sessionKey);
+      this.peerIndex.clear();
+    }
   }
 
   _peerToId(peer) {
@@ -121,7 +170,33 @@ export class MtprotoClient {
     if (peer instanceof Api.PeerChannel) {
       return peer.channelId;
     }
-    return 0;
+    return BigInt(0);
+  }
+
+  _peerKind(peer) {
+    if (peer instanceof Api.PeerUser) return "User";
+    if (peer instanceof Api.PeerChat) return "Group";
+    if (peer instanceof Api.PeerChannel) return "Channel";
+    return "Chat";
+  }
+
+  _mediaLabel(message) {
+    if (message.photo) return "[Photo]";
+    if (message.document) return "[File]";
+    if (message.media) return "[Media]";
+    return "";
+  }
+
+  _userSummary(user) {
+    if (!user) return null;
+    return {
+      id: user.id?.toString?.() || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      username: user.username || "",
+      phone: user.phone || "",
+      displayName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Telegram user",
+    };
   }
 
   _toDate(value) {
